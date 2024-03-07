@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-CFLAGS = -Wall -O2
+CFLAGS = -Wall -Og -g -ggdb
 LDFLAGS = 
 
 DEPDIR = ./.deps
