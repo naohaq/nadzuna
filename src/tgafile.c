@@ -18,6 +18,14 @@
 #include "tgafile.h"
 #include "error.h"
 
+/* TGA pixel formats */
+#define TGA_TYPE_MAPPED       (1)
+#define TGA_TYPE_COLOR        (2)
+#define TGA_TYPE_GRAY         (3)
+#define TGA_TYPE_MAPPED_RLE   (9)
+#define TGA_TYPE_COLOR_RLE   (10)
+#define TGA_TYPE_GRAY_RLE    (11)
+
 struct ST_TGA_HEADER {
 	uint8_t id_len;
 	uint8_t cmap_type;
@@ -36,57 +44,38 @@ struct ST_TGA_HEADER {
 
 typedef struct ST_TGA_HEADER TGAHeader_t;
 
-static int load_tga_header(FILE * fp, TGAHeader_t * hdr);
+static int TGA_load_header(FILE * fp, TGAHeader_t * hdr);
 
 #define FREAD_CHECK_ERROR(x) do {						\
 		if ((x) == 0) {									\
+			err = 1;									\
 			ndz_print_error(__func__, "Unexpected EOF"); \
-			ret_val = -1;								\
 			goto ERR_EXIT;								\
 		}												\
 		else if ((x) == -1) {							\
+			err = 1;									\
 			ndz_print_strerror(__func__, "fread");		\
-			ret_val = -1;								\
 			goto ERR_EXIT;								\
 		}												\
 	} while(0)
 
 #define FWRITE_CHECK_ERROR(x) do {					\
 		if ((x) < 0) {								\
+			err = 1;								\
 			ndz_print_strerror(__func__, "fwrite");	\
-			ret_val = -1;							\
 			goto ERR_EXIT;							\
 		}											\
 	} while (0)										\
 
 
-static const char *
-get_image_type_string(int img_type)
-{
-	const char * str = NULL;
-
-	switch (img_type) {
-	case  0: str = "No image data included";  break;
-	case  1: str = "Color-mapped image";      break;
-	case  2: str = "Full color image";        break;
-	case  3: str = "Grayscale image";         break;
-	case  9: str = "RLE, Color-mapped image"; break;
-	case 10: str = "RLE, Full color image";   break;
-	case 11: str = "RLE, Grayscale image";    break;
-	default:
-		/* Unknown color type */
-		str = NULL;
-	}
-
-	return str;
-}
-
 static int
-load_tga_header(FILE * fp, TGAHeader_t * hdr)
+TGA_load_header(FILE * fp, TGAHeader_t * hdr)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int ret_val = 0;
+	int err = 0;
 
+	assert(fp != NULL);
 	assert(hdr != NULL);
 
 	ret = ndz_fread_U8str(fp, &(hdr->id_len), 1);
@@ -126,45 +115,174 @@ load_tga_header(FILE * fp, TGAHeader_t * hdr)
 	FREAD_CHECK_ERROR(ret);
 
 ERR_EXIT:
+	if (err) {
+		ret_val = -1;
+	}
 	return ret_val;
 }
 
+static BitmapImage_t *
+TGA_load_fullcolor_image(FILE * fp, TGAHeader_t * phdr, int w, int h, int bpp, int vflip)
+{
+	int err = 0;
+	uint8_t * pxbuf = NULL;
+
+	assert(bpp == 16 || bpp == 24 || bpp == 32);
+
+	BitmapImage_t * img = BitmapImage_Create(w, 0, h, 32, COLORFMT_RGB888_32);
+	if (img == NULL) {
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+	int bytepp = (bpp + 7) >> 3;
+	pxbuf = malloc(w*bytepp);
+	if (pxbuf == NULL) {
+		err = 1;
+		ndz_print_error(__func__, "Failed to allocate memory...");
+		goto ERR_EXIT;
+	}
+
+	uint32_t * pixels = (uint32_t *)img->pixels;
+	for (int y=0; y<h; y+=1) {
+		int yy = vflip ? (h - y - 1) : y;
+		uint32_t * dlp = &(pixels[yy * img->stride]);
+		int ret = ndz_fread_U8str(fp, pxbuf, w*bytepp);
+		FREAD_CHECK_ERROR(ret);
+
+		switch (bpp) {
+		case 16:
+			break;
+
+		case 24:
+			for (int k=0; k<w; k+=1) {
+				uint8_t b = pxbuf[k*3+0];
+				uint8_t g = pxbuf[k*3+1];
+				uint8_t r = pxbuf[k*3+2];
+				dlp[k] = combine_ARGB(0xff,r,g,b);
+			}
+			break;
+
+		case 32:
+			for (int k=0; k<w; k+=1) {
+				uint8_t b = pxbuf[k*4+0];
+				uint8_t g = pxbuf[k*4+1];
+				uint8_t r = pxbuf[k*4+2];
+				uint8_t a = pxbuf[k*4+3];
+				dlp[k] = combine_ARGB(a,r,g,b);
+			}
+			break;
+
+		default:
+			/* must not be reached. */
+			assert(0);
+		}
+	}
+
+ERR_EXIT:
+	if (pxbuf != NULL) {
+		free(pxbuf);
+	}
+
+	if (err) {
+		if (img != NULL) {
+			BitmapImage_Free(img);
+			img = NULL;
+		}
+	}
+	return img;
+}
 
 BitmapImage_t *
 load_tga(const char * filename)
 {
 	BitmapImage_t * img = NULL;
+	int err = 0;
 	FILE * fp;
-	TGAHeader_t hdr;
+
+	assert(filename != NULL);
 
 	fp = fopen(filename, "rb");
 	if (fp == NULL) {
 		ndz_print_strerror(__func__, "fopen");
+		err = 1;
 		goto ERR_EXIT;
 	}
 
-	if (load_tga_header(fp, &hdr) < 0) {
+	TGAHeader_t hdr;
+	if (TGA_load_header(fp, &hdr) < 0) {
+		ndz_print_error(__func__, "Failed to load TGA header");
+		err = 1;
 		goto ERR_EXIT;
 	}
 
-	{
-		const char * str = get_image_type_string(hdr.img_type);
-		if (str != NULL) {
-			printf("Image type: %s\n", str);
-		}
-		else {
-			printf("Image type: Unknown(%d)\n", hdr.img_type);
-		}
+	int w = hdr.img_width;
+	int h = hdr.img_height;
+	if (! IMG_CHECK_DIMENSIONS(w, h)) {
+		ndz_print_error(__func__, "Image size is out of range: %d x %d", w, h);
+		err = 1;
+		goto ERR_EXIT;
 	}
 
-	printf("Image desc: %02xh\n", hdr.img_desc);
-	printf("Color map length: %d\n", hdr.cmap_len);
-	printf("Color map size  : %d\n", hdr.cmap_size);
-	printf("%d x %d, %dbpp\n"  , hdr.img_width, hdr.img_height, hdr.img_bpp);
+	int vflip = 1;
+	if ((hdr.img_desc & 0x20) != 0) {
+		vflip = 0;
+	}
 
-	fclose(fp);
+	int bpp = hdr.img_bpp;
+	switch (hdr.img_type) {
+	case TGA_TYPE_MAPPED:
+		if (bpp != 8) {
+			ndz_print_error(__func__, "Color-mapped %d bpp image is not supported", bpp);
+			err = 1;
+			goto ERR_EXIT;
+		}
+		break;
+
+	case TGA_TYPE_COLOR:
+		if (bpp != 16 && bpp != 24 && bpp != 32) {
+			ndz_print_error(__func__, "Full color %d bpp image is not supported", bpp);
+			err = 1;
+			goto ERR_EXIT;
+		}
+
+		img = TGA_load_fullcolor_image(fp, &hdr, w, h, bpp, vflip);
+		break;
+
+	case TGA_TYPE_GRAY:
+		if (bpp != 8) {
+			ndz_print_error(__func__, "Grayscale %d bpp image is not supported", bpp);
+			err = 1;
+			goto ERR_EXIT;
+		}
+		break;
+
+	case TGA_TYPE_MAPPED_RLE:
+	case TGA_TYPE_COLOR_RLE:
+	case TGA_TYPE_GRAY_RLE:
+		ndz_print_error(__func__, "RLE is not supported");
+		err = 1;
+		goto ERR_EXIT;
+		break;
+
+	default:
+		ndz_print_error(__func__, "Unknown image type: %d", hdr.img_type);
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+	fprintf(stderr, "Image desc: %02xh\n", hdr.img_desc);
 
 ERR_EXIT:
+	if (fp != NULL) {
+		fclose(fp);
+	}
+	if (err) {
+		if (img != NULL) {
+			BitmapImage_Free(img);
+			img = NULL;
+		}
+	}
 	return img;
 }
 

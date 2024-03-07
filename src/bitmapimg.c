@@ -30,6 +30,11 @@ BitmapImage_Create(int32_t width, int32_t stride, int32_t height, int32_t bpp, C
 		stride = width;
 	}
 
+	if (stride < width) {
+		ndz_print_error(__func__, "Stride is smaller than width");
+		goto ERR_EXIT;
+	}
+
 	bytepp = GetBytePerPixel_of_Format(fmt);
 	if (bytepp < 0) {
 		ndz_print_error(__func__, "Unknown color format: %d", fmt);

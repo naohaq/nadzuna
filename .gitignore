@@ -1,5 +1,6 @@
 src/main
 src/tgatest
+src/tmp/
 
 # Prerequisites
 *.d
