@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-CFLAGS = -Wall -Og -g -ggdb
+CFLAGS = -std=gnu99 -Wall -Og -g -ggdb
 LDFLAGS = 
 
 DEPDIR = ./.deps
