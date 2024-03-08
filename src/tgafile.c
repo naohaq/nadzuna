@@ -121,6 +121,7 @@ ERR_EXIT:
 	return ret_val;
 }
 
+
 static BitmapImage_t *
 TGA_load_fullcolor_image(FILE * fp, TGAHeader_t * phdr, int w, int h, int bpp, int vflip)
 {
@@ -152,6 +153,14 @@ TGA_load_fullcolor_image(FILE * fp, TGAHeader_t * phdr, int w, int h, int bpp, i
 
 		switch (bpp) {
 		case 16:
+			for (int k=0; k<w; k+=1) {
+				uint16_t c = ndz_read_U16_l(&(pxbuf[k*2]));
+				/* uint8_t a = (c&0x8000)>>15; */
+				uint8_t r = (c&0x7c00)>>10;
+				uint8_t g = (c&0x03e0)>> 5;
+				uint8_t b = (c&0x001f);
+				dlp[k] = combine_ARGB(0xff,r<<3,g<<3,b<<3);
+			}
 			break;
 
 		case 24:
@@ -271,7 +280,6 @@ load_tga(const char * filename)
 		goto ERR_EXIT;
 	}
 
-	fprintf(stderr, "Image desc: %02xh\n", hdr.img_desc);
 
 ERR_EXIT:
 	if (fp != NULL) {
