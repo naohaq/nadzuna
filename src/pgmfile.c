@@ -128,22 +128,32 @@ ERR_EXIT:
 }
 
 
-int32_t
+int
 save_pgm(const char * filename, BitmapImage_t * img)
 {
-	int32_t ret = 0;
-	int32_t k;
-	int32_t width;
-	int32_t height;
-	int32_t stride;
-	FILE * out_fp;
+	int ret = 0;
+	uint8_t * out_buf = NULL;
+	FILE * out_fp = NULL;
 
 	assert(img != NULL);
 	assert(filename != NULL);
 
-	width  = img->width;
-	height = img->height;
-	stride = (img->stride == 0) ? img->width : img->stride;
+	switch (img->fmt) {
+	case COLORFMT_Y8:
+		break;
+
+	case COLORFMT_RGB888_32:
+		break;
+
+	default:
+		ndz_print_error(__func__, "Unsupported color format.");
+		ret = -1;
+		goto ERR_EXIT;
+	}
+
+	int width  = img->width;
+	int height = img->height;
+	int stride = (img->stride == 0) ? img->width : img->stride;
 
 	out_fp = fopen(filename, "wb");
 	if (out_fp == NULL) {
@@ -156,12 +166,41 @@ save_pgm(const char * filename, BitmapImage_t * img)
 	fprintf(out_fp, "%d %d\n", width, height);
 	fprintf(out_fp, "255\n");
 
-	for (k=0; k<height; k+=1) {
-		uint8_t * out_ln = &(((uint8_t *)img->pixels)[k * stride]);
-		fwrite(out_ln, 1, width, out_fp);
+	if (img->fmt == COLORFMT_Y8) {
+		uint8_t * pixels = (uint8_t *)img->pixels;
+
+		for (int k=0; k<height; k+=1) {
+			uint8_t * out_ln = &(pixels[k * stride]);
+			fwrite(out_ln, 1, width, out_fp);
+		}
+	}
+	else if (img->fmt == COLORFMT_RGB888_32) {
+		uint32_t * pixels = (uint32_t *)img->pixels;
+
+		out_buf = malloc(width);
+		if (out_buf == NULL) {
+			ndz_print_error(__func__, "Failed to allocate memory...");
+			ret = -1;
+			goto ERR_EXIT;
+		}
+
+		for (int k=0; k<height; k+=1) {
+			uint32_t * slp = &(pixels[k * stride]);
+
+			for (int j=0; j<width; j+=1) {
+				uint32_t c = slp[j];
+				yuv444_color_t s = RGB_to_YUV(c);
+				out_buf[j] = s.y;
+			}
+
+			fwrite(out_buf, 1, width, out_fp);
+		}
 	}
 
 ERR_EXIT:
+	if (out_buf != NULL) {
+		free(out_buf);
+	}
 	if (out_fp != NULL) {
 		fclose(out_fp);
 	}
