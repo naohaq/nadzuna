@@ -22,7 +22,7 @@ GetBytePerPixel_of_Format(ColorFormat_t fmt)
 	int32_t byte_per_pixel;
 
 	switch (fmt) {
-	case COLORFMT_RGB888_32:   byte_per_pixel = 4; break;
+	case COLORFMT_ARGB8888_32: byte_per_pixel = 4; break;
 	case COLORFMT_BGR888_32:   byte_per_pixel = 4; break;
 	case COLORFMT_RGB565_16:   byte_per_pixel = 2; break;
 	case COLORFMT_ARGB1555_16: byte_per_pixel = 2; break;
@@ -151,7 +151,7 @@ convert_Y8_to_RGB888(BitmapImage_t * src_img)
 	stride = (src_img->stride != 0) ? src_img->stride : width;
 	pixels = (uint8_t *)src_img->pixels;
 
-	dst_img = BitmapImage_Create(width, 0, height, 24, COLORFMT_RGB888_32);
+	dst_img = BitmapImage_Create(width, 0, height, 32, COLORFMT_RGB888_32);
 	if (dst_img == NULL) {
 		ndz_print_error(__func__, "Memory allocation failed...");
 		goto ERR_EXIT;

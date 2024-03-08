@@ -131,7 +131,7 @@ TGA_load_fullcolor_image(FILE * fp, TGAHeader_t * phdr, int w, int h, int bpp, i
 
 	assert(bpp == 16 || bpp == 24 || bpp == 32);
 
-	BitmapImage_t * img = BitmapImage_Create(w, 0, h, 32, COLORFMT_RGB888_32);
+	BitmapImage_t * img = BitmapImage_Create(w, 0, h, 32, COLORFMT_ARGB8888_32);
 	if (img == NULL) {
 		err = 1;
 		goto ERR_EXIT;

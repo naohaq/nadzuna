@@ -142,7 +142,7 @@ save_pgm(const char * filename, BitmapImage_t * img)
 	case COLORFMT_Y8:
 		break;
 
-	case COLORFMT_RGB888_32:
+	case COLORFMT_ARGB8888_32:
 		break;
 
 	default:
@@ -174,7 +174,7 @@ save_pgm(const char * filename, BitmapImage_t * img)
 			fwrite(out_ln, 1, width, out_fp);
 		}
 	}
-	else if (img->fmt == COLORFMT_RGB888_32) {
+	else if (img->fmt == COLORFMT_ARGB8888_32) {
 		uint32_t * pixels = (uint32_t *)img->pixels;
 
 		out_buf = malloc(width);
