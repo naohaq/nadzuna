@@ -46,26 +46,26 @@ typedef struct ST_TGA_HEADER TGAHeader_t;
 
 static int TGA_load_header(FILE * fp, TGAHeader_t * hdr);
 
-#define FREAD_CHECK_ERROR(x) do {						\
-		if ((x) == 0) {									\
-			err = 1;									\
+#define FREAD_CHECK_ERROR(x) do {                        \
+		if ((x) == 0) {                                  \
+			err = 1;                                     \
 			ndz_print_error(__func__, "Unexpected EOF"); \
-			goto ERR_EXIT;								\
-		}												\
-		else if ((x) == -1) {							\
-			err = 1;									\
-			ndz_print_strerror(__func__, "fread");		\
-			goto ERR_EXIT;								\
-		}												\
+			goto ERR_EXIT;                               \
+		}                                                \
+		else if ((x) == -1) {                            \
+			err = 1;                                     \
+			ndz_print_strerror(__func__, "fread");       \
+			goto ERR_EXIT;                               \
+		}                                                \
 	} while(0)
 
-#define FWRITE_CHECK_ERROR(x) do {					\
-		if ((x) < 0) {								\
-			err = 1;								\
-			ndz_print_strerror(__func__, "fwrite");	\
-			goto ERR_EXIT;							\
-		}											\
-	} while (0)										\
+#define FWRITE_CHECK_ERROR(x) do {                  \
+		if ((x) < 0) {                              \
+			err = 1;                                \
+			ndz_print_strerror(__func__, "fwrite"); \
+			goto ERR_EXIT;                          \
+		}                                           \
+	} while (0)                                     \
 
 
 static int
@@ -126,6 +126,7 @@ static BitmapImage_t *
 TGA_load_fullcolor_image(FILE * fp, TGAHeader_t * phdr, int w, int h, int bpp, int vflip)
 {
 	int err = 0;
+	int has_alpha = 0;
 	uint8_t * pxbuf = NULL;
 
 	assert(bpp == 16 || bpp == 24 || bpp == 32);
@@ -144,6 +145,11 @@ TGA_load_fullcolor_image(FILE * fp, TGAHeader_t * phdr, int w, int h, int bpp, i
 		goto ERR_EXIT;
 	}
 
+	if (bpp == 16 && ((phdr->img_desc & 0x0f) != 0)) {
+		has_alpha = 1;
+	}
+
+	uint8_t a_mask = has_alpha ? 0x00 : 0xff;
 	uint32_t * pixels = (uint32_t *)img->pixels;
 	for (int y=0; y<h; y+=1) {
 		int yy = vflip ? (h - y - 1) : y;
@@ -155,11 +161,11 @@ TGA_load_fullcolor_image(FILE * fp, TGAHeader_t * phdr, int w, int h, int bpp, i
 		case 16:
 			for (int k=0; k<w; k+=1) {
 				uint16_t c = ndz_read_U16_l(&(pxbuf[k*2]));
-				/* uint8_t a = (c&0x8000)>>15; */
+				uint8_t a = (c&0x8000)>>15;
 				uint8_t r = (c&0x7c00)>>10;
 				uint8_t g = (c&0x03e0)>> 5;
 				uint8_t b = (c&0x001f);
-				dlp[k] = combine_ARGB(0xff,r<<3,g<<3,b<<3);
+				dlp[k] = combine_ARGB((0xff*a)|a_mask,r<<3,g<<3,b<<3);
 			}
 			break;
 
@@ -184,7 +190,8 @@ TGA_load_fullcolor_image(FILE * fp, TGAHeader_t * phdr, int w, int h, int bpp, i
 
 		default:
 			/* must not be reached. */
-			assert(0);
+			ndz_print_error(__func__, "[BUG] illegal bpp value: %d", bpp);
+			abort( );
 		}
 	}
 
