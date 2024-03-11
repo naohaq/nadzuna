@@ -178,7 +178,7 @@ ERR_EXIT:
 
 
 static BitmapImage_t *
-TGA_load_fullcolor_image(FILE * fp, TGAHeader_t * phdr, int w, int h, int bpp, int vflip)
+TGA_load_fullcolor_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, int bpp, int vflip)
 {
 	int err = 0;
 	int has_alpha = 0;
@@ -266,6 +266,41 @@ ERR_EXIT:
 	return img;
 }
 
+
+static BitmapImage_t *
+TGA_load_grayscale_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, int bpp, int vflip)
+{
+	int err = 0;
+
+	assert(fp != NULL);
+	assert(phdr != NULL);
+	assert(bpp == 8);
+
+	BitmapImage_t * img = BitmapImage_Create(w, 0, h, 8, COLORFMT_Y8);
+	if (img == NULL) {
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+	int bytepp = (bpp + 7) >> 3;
+	int stride = img->stride;
+	uint8_t * pixels = (uint8_t *)img->pixels;
+	for (int y=0; y<h; y+=1) {
+		int yy = vflip ? (h - y - 1) : y;
+		uint8_t * dlp = &(pixels[yy * stride]);
+		int32_t ret = ndz_fread_U8str(fp, dlp, w*bytepp);
+		FREAD_CHECK_ERROR(ret);
+	}
+
+ERR_EXIT:
+	if (err) {
+		if (img != NULL) {
+			BitmapImage_Free(img);
+			img = NULL;
+		}
+	}
+	return img;
+}
 
 static int
 TGA_store_fullcolor_image(FILE * fp, const TGAHeader_t * phdr, const BitmapImage_t * img)
@@ -407,6 +442,9 @@ load_tga(const char * filename)
 			err = 1;
 			goto ERR_EXIT;
 		}
+
+		/* NOT YET IMPLEMENTED */
+
 		break;
 
 	case TGA_TYPE_COLOR:
@@ -425,6 +463,8 @@ load_tga(const char * filename)
 			err = 1;
 			goto ERR_EXIT;
 		}
+
+		img = TGA_load_grayscale_image(fp, &hdr, w, h, bpp, vflip);
 		break;
 
 	case TGA_TYPE_MAPPED_RLE:
