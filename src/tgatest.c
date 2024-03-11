@@ -53,7 +53,7 @@ main(int argc, char * argv[])
 		}
 
 		fprintf(stderr, "Output result...\n");
-		save_pgm("tmp/output.pgm", img_y8);
+		save_tga("tmp/output.tga", img_y8);
 	}
 
 	return 0;

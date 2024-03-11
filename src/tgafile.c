@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 
 #include "common.h"
@@ -47,72 +48,126 @@ typedef struct ST_TGA_HEADER TGAHeader_t;
 static int TGA_load_header(FILE * fp, TGAHeader_t * hdr);
 
 #define FREAD_CHECK_ERROR(x) do {                        \
-		if ((x) == 0) {                                  \
-			err = 1;                                     \
-			ndz_print_error(__func__, "Unexpected EOF"); \
-			goto ERR_EXIT;                               \
-		}                                                \
-		else if ((x) == -1) {                            \
-			err = 1;                                     \
-			ndz_print_strerror(__func__, "fread");       \
-			goto ERR_EXIT;                               \
-		}                                                \
-	} while(0)
+        if ((x) == 0) {                                  \
+            err = 1;                                     \
+            ndz_print_error(__func__, "Unexpected EOF"); \
+            goto ERR_EXIT;                               \
+        }                                                \
+        else if ((x) == -1) {                            \
+            err = 1;                                     \
+            ndz_print_strerror(__func__, "fread");       \
+            goto ERR_EXIT;                               \
+        }                                                \
+    } while(0)
 
 #define FWRITE_CHECK_ERROR(x) do {                  \
-		if ((x) < 0) {                              \
-			err = 1;                                \
-			ndz_print_strerror(__func__, "fwrite"); \
-			goto ERR_EXIT;                          \
-		}                                           \
-	} while (0)                                     \
+        if ((x) < 0) {                              \
+            err = 1;                                \
+            ndz_print_strerror(__func__, "fwrite"); \
+            goto ERR_EXIT;                          \
+        }                                           \
+    } while (0)                                     \
 
 
 static int
-TGA_load_header(FILE * fp, TGAHeader_t * hdr)
+TGA_load_header(FILE * fp, TGAHeader_t * phdr)
 {
 	int32_t ret;
 	int ret_val = 0;
 	int err = 0;
 
 	assert(fp != NULL);
-	assert(hdr != NULL);
+	assert(phdr != NULL);
 
-	ret = ndz_fread_U8str(fp, &(hdr->id_len), 1);
+	ret = ndz_fread_U8str(fp, &(phdr->id_len), 1);
 	FREAD_CHECK_ERROR(ret);
 
-	ret = ndz_fread_U8str(fp, &(hdr->cmap_type), 1);
+	ret = ndz_fread_U8str(fp, &(phdr->cmap_type), 1);
 	FREAD_CHECK_ERROR(ret);
 
-	ret = ndz_fread_U8str(fp, &(hdr->img_type), 1);
+	ret = ndz_fread_U8str(fp, &(phdr->img_type), 1);
 	FREAD_CHECK_ERROR(ret);
 
-	ret = ndz_fread_I16_l(fp, &(hdr->cmap_org));
+	ret = ndz_fread_I16_l(fp, &(phdr->cmap_org));
 	FREAD_CHECK_ERROR(ret);
 
-	ret = ndz_fread_I16_l(fp, &(hdr->cmap_len));
+	ret = ndz_fread_I16_l(fp, &(phdr->cmap_len));
 	FREAD_CHECK_ERROR(ret);
 
-	ret = ndz_fread_U8str(fp, &(hdr->cmap_size), 1);
+	ret = ndz_fread_U8str(fp, &(phdr->cmap_size), 1);
 	FREAD_CHECK_ERROR(ret);
 
-	ret = ndz_fread_I16_l(fp, &(hdr->img_org_x));
+	ret = ndz_fread_I16_l(fp, &(phdr->img_org_x));
 	FREAD_CHECK_ERROR(ret);
 
-	ret = ndz_fread_I16_l(fp, &(hdr->img_org_y));
+	ret = ndz_fread_I16_l(fp, &(phdr->img_org_y));
 	FREAD_CHECK_ERROR(ret);
 
-	ret = ndz_fread_I16_l(fp, &(hdr->img_width));
+	ret = ndz_fread_I16_l(fp, &(phdr->img_width));
 	FREAD_CHECK_ERROR(ret);
 
-	ret = ndz_fread_I16_l(fp, &(hdr->img_height));
+	ret = ndz_fread_I16_l(fp, &(phdr->img_height));
 	FREAD_CHECK_ERROR(ret);
 
-	ret = ndz_fread_U8str(fp, &(hdr->img_bpp), 1);
+	ret = ndz_fread_U8str(fp, &(phdr->img_bpp), 1);
 	FREAD_CHECK_ERROR(ret);
 
-	ret = ndz_fread_U8str(fp, &(hdr->img_desc), 1);
+	ret = ndz_fread_U8str(fp, &(phdr->img_desc), 1);
 	FREAD_CHECK_ERROR(ret);
+
+ERR_EXIT:
+	if (err) {
+		ret_val = -1;
+	}
+	return ret_val;
+}
+
+
+static int
+TGA_store_header(FILE * fp, TGAHeader_t * phdr)
+{
+	int32_t ret;
+	int ret_val = 0;
+	int err = 0;
+
+	assert(fp != NULL);
+	assert(phdr != NULL);
+
+	ret = ndz_fwrite_U8str(fp, &(phdr->id_len), 1);
+	FWRITE_CHECK_ERROR(ret);
+
+	ret = ndz_fwrite_U8str(fp, &(phdr->cmap_type), 1);
+	FWRITE_CHECK_ERROR(ret);
+
+	ret = ndz_fwrite_U8str(fp, &(phdr->img_type), 1);
+	FWRITE_CHECK_ERROR(ret);
+
+	ret = ndz_fwrite_I16_l(fp, phdr->cmap_org);
+	FWRITE_CHECK_ERROR(ret);
+
+	ret = ndz_fwrite_I16_l(fp, phdr->cmap_len);
+	FWRITE_CHECK_ERROR(ret);
+
+	ret = ndz_fwrite_U8str(fp, &(phdr->cmap_size), 1);
+	FWRITE_CHECK_ERROR(ret);
+
+	ret = ndz_fwrite_I16_l(fp, phdr->img_org_x);
+	FWRITE_CHECK_ERROR(ret);
+
+	ret = ndz_fwrite_I16_l(fp, phdr->img_org_y);
+	FWRITE_CHECK_ERROR(ret);
+
+	ret = ndz_fwrite_I16_l(fp, phdr->img_width);
+	FWRITE_CHECK_ERROR(ret);
+
+	ret = ndz_fwrite_I16_l(fp, phdr->img_height);
+	FWRITE_CHECK_ERROR(ret);
+
+	ret = ndz_fwrite_U8str(fp, &(phdr->img_bpp), 1);
+	FWRITE_CHECK_ERROR(ret);
+
+	ret = ndz_fwrite_U8str(fp, &(phdr->img_desc), 1);
+	FWRITE_CHECK_ERROR(ret);
 
 ERR_EXIT:
 	if (err) {
@@ -129,6 +184,8 @@ TGA_load_fullcolor_image(FILE * fp, TGAHeader_t * phdr, int w, int h, int bpp, i
 	int has_alpha = 0;
 	uint8_t * pxbuf = NULL;
 
+	assert(fp != NULL);
+	assert(phdr != NULL);
 	assert(bpp == 16 || bpp == 24 || bpp == 32);
 
 	BitmapImage_t * img = BitmapImage_Create(w, 0, h, 32, COLORFMT_ARGB8888_32);
@@ -154,7 +211,7 @@ TGA_load_fullcolor_image(FILE * fp, TGAHeader_t * phdr, int w, int h, int bpp, i
 	for (int y=0; y<h; y+=1) {
 		int yy = vflip ? (h - y - 1) : y;
 		uint32_t * dlp = &(pixels[yy * img->stride]);
-		int ret = ndz_fread_U8str(fp, pxbuf, w*bytepp);
+		int32_t ret = ndz_fread_U8str(fp, pxbuf, w*bytepp);
 		FREAD_CHECK_ERROR(ret);
 
 		switch (bpp) {
@@ -207,6 +264,103 @@ ERR_EXIT:
 		}
 	}
 	return img;
+}
+
+
+static int
+TGA_store_fullcolor_image(FILE * fp, const TGAHeader_t * phdr, const BitmapImage_t * img)
+{
+	int err = 0;
+	int ret_val = 0;
+	uint8_t * pxbuf = NULL;
+
+	assert(fp != NULL);
+	assert(phdr != NULL);
+	assert(img != NULL);
+
+	int w = img->width;
+	int h = img->height;
+	int bpp = phdr->img_bpp;
+	int bytepp = (bpp + 7) >> 3;
+
+	pxbuf = malloc(w*bytepp);
+	if (pxbuf == NULL) {
+		err = 1;
+		ndz_print_error(__func__, "Failed to allocate memory...");
+		goto ERR_EXIT;
+	}
+
+	for (int y=0; y<h; y+=1) {
+		int yy = h - y - 1; /* flip vertically */
+		int32_t ret;
+
+		switch (img->fmt) {
+		case COLORFMT_ARGB8888_32: {
+			uint32_t * slp = &(((uint32_t *)img->pixels)[yy * img->stride]);
+			for (int k=0; k<w; k+=1) {
+				ndz_write_U32_l(&(pxbuf[k*4]), slp[k]);
+			}
+			break;
+		}
+
+		case COLORFMT_ARGB1555_16: {
+			uint16_t * slp = &(((uint16_t *)img->pixels)[yy * img->stride]);
+			for (int k=0; k<w; k+=1) {
+				ndz_write_U16_l(&(pxbuf[k*2]), slp[k]);
+			}
+			break;
+		}
+
+		default:
+			/* must not be reached. */
+			ndz_print_error(__func__, "[BUG] illegal image format: %d", img->fmt);
+			abort( );
+		}
+
+		ret = ndz_fwrite_U8str(fp, pxbuf, w*bytepp);
+		FWRITE_CHECK_ERROR(ret);
+	}
+
+ERR_EXIT:
+	if (pxbuf != NULL) {
+		free(pxbuf);
+	}
+
+	if (err) {
+		ret_val = -1;
+	}
+	return ret_val;
+}
+
+
+static int
+TGA_store_grayscale_image(FILE * fp, const TGAHeader_t * phdr, const BitmapImage_t * img)
+{
+	int err = 0;
+	int ret_val = 0;
+
+	assert(fp != NULL);
+	assert(phdr != NULL);
+	assert(img != NULL);
+
+	int w = img->width;
+	int h = img->height;
+	int stride = img->stride;
+
+	uint8_t * pixels = (uint8_t *)img->pixels;
+
+	for (int y=0; y<h; y+=1) {
+		int yy = h - y - 1; /* flip vertically */
+		const uint8_t * slp = &(pixels[yy * stride]);
+		int ret = ndz_fwrite_U8str(fp, slp, w);
+		FWRITE_CHECK_ERROR(ret);
+	}
+
+ERR_EXIT:
+	if (err) {
+		ret_val = -1;
+	}
+	return ret_val;
 }
 
 BitmapImage_t *
@@ -299,6 +453,101 @@ ERR_EXIT:
 		}
 	}
 	return img;
+}
+
+int
+save_tga(const char * filename, BitmapImage_t * img)
+{
+	int err = 0;
+	int ret_val = 0;
+	FILE * fp = NULL;
+
+	assert(filename != NULL);
+	assert(img != NULL);
+
+	TGAHeader_t hdr;
+
+	memset(&hdr, 0, sizeof(TGAHeader_t));
+
+	hdr.id_len    = 0;
+	hdr.cmap_type = 0;
+	hdr.cmap_org  = 0;
+	hdr.cmap_len  = 0;
+	hdr.cmap_size = 0;
+	hdr.img_org_x = 0;
+	hdr.img_org_y = 0;
+
+	hdr.img_width  = img->width;
+	hdr.img_height = img->height;
+
+	switch (img->fmt) {
+	case COLORFMT_ARGB8888_32:
+		hdr.img_type = TGA_TYPE_COLOR;
+		hdr.img_bpp  = 32;
+		hdr.img_desc = 0x08;
+		break;
+
+	case COLORFMT_ARGB1555_16:
+		hdr.img_type = TGA_TYPE_COLOR;
+		hdr.img_bpp  = 16;
+		hdr.img_desc = 0x01;
+		break;
+
+	case COLORFMT_Y8:
+		hdr.img_type = TGA_TYPE_GRAY;
+		hdr.img_bpp  = 8;
+		hdr.img_desc = 0x00;
+		break;
+
+	default:
+		ndz_print_error(__func__, "Unsupported color format: %d\n", img->fmt);
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+	fp = fopen(filename, "wb");
+	if (fp == NULL) {
+		ndz_print_strerror(__func__, "fopen");
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+	if (TGA_store_header(fp, &hdr) < 0) {
+		ndz_print_error(__func__, "Failed to store TGA header");
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+	switch (img->fmt) {
+	case COLORFMT_ARGB8888_32:
+	case COLORFMT_ARGB1555_16:
+		if (TGA_store_fullcolor_image(fp, &hdr, img) < 0) {
+			err = 1;
+			goto ERR_EXIT;
+		}
+		break;
+
+	case COLORFMT_Y8:
+		if (TGA_store_grayscale_image(fp, &hdr, img) < 0) {
+			err = 1;
+			goto ERR_EXIT;
+		}
+		break;
+
+	default:
+		/* must not be reached. */
+		ndz_print_error(__func__, "[BUG] illegal image format: %d", img->fmt);
+		abort( );
+	}
+
+ERR_EXIT:
+	if (fp != NULL) {
+		fclose(fp);
+	}
+	if (err) {
+		ret_val = -1;
+	}
+	return ret_val;
 }
 
 
