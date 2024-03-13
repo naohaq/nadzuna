@@ -176,6 +176,148 @@ ERR_EXIT:
 	return ret_val;
 }
 
+static int
+TGA_load_colormap(FILE * fp, const TGAHeader_t * phdr, uint32_t * coltbl)
+{
+	int err = 0;
+	int has_alpha = 0;
+	int cnt = 0;
+
+	assert(fp != NULL);
+	assert(phdr != NULL);
+	assert(coltbl != NULL);
+
+	int n = phdr->cmap_len;
+	int s = phdr->cmap_size;
+
+	if (s == 16 && ((phdr->img_desc & 0x0f) != 0)) {
+		has_alpha = 1;
+	}
+
+	switch (s) {
+	case 16: {
+		uint8_t a_mask = has_alpha ? 0x00 : 0xff;
+		for (int k=0; k<n; k+=1) {
+			uint16_t c;
+			int32_t ret = ndz_fread_U16_l(fp, &c);
+			FREAD_CHECK_ERROR(ret);
+
+			uint8_t a = (c&0x8000)>>15;
+			uint8_t r = (c&0x7c00)>>10;
+			uint8_t g = (c&0x03e0)>> 5;
+			uint8_t b = (c&0x001f);
+
+			coltbl[k] = combine_ARGB((0xff*a)|a_mask,r<<3,g<<3,b<<3);
+			cnt += 1;
+		}
+		break;
+	}
+
+	case 24: {
+		for (int k=0; k<n; k+=1) {
+			uint8_t rgb[3];
+			int32_t ret = ndz_fread_U8str(fp, &(rgb[0]), 3);
+			FREAD_CHECK_ERROR(ret);
+
+			coltbl[k] = combine_ARGB(0xff,rgb[0],rgb[1],rgb[2]);
+			cnt += 1;
+		}
+		break;
+	}
+
+	case 32: {
+		for (int k=0; k<n; k+=1) {
+			uint32_t c;
+			int32_t ret = ndz_fread_U32_l(fp, &c);
+			FREAD_CHECK_ERROR(ret);
+
+			coltbl[k] = c;
+			cnt += 1;
+		}
+		break;
+	}
+
+	default:
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+ERR_EXIT:
+	if (err) {
+		cnt = -1;
+	}
+	return cnt;
+}
+
+
+static BitmapImage_t *
+TGA_load_colormapped_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, int bpp, int vflip)
+{
+	int err = 0;
+	uint32_t * coltbl = NULL;
+	uint8_t * pxbuf = NULL;
+
+	assert(fp != NULL);
+	assert(phdr != NULL);
+	assert(bpp == 8);
+
+	BitmapImage_t * img = BitmapImage_Create(w, 0, h, 32, COLORFMT_ARGB8888_32);
+	if (img == NULL) {
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+	coltbl = malloc(sizeof(uint32_t) * phdr->cmap_len);
+	if (coltbl == NULL) {
+		err = 1;
+		ndz_print_error(__func__, "Failed to allocate memory...");
+		goto ERR_EXIT;
+	}
+
+	if (TGA_load_colormap(fp, phdr, coltbl) < 0) {
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+	pxbuf = malloc(w);
+	if (pxbuf == NULL) {
+		err = 1;
+		ndz_print_error(__func__, "Failed to allocate memory...");
+		goto ERR_EXIT;
+	}
+
+	uint32_t * pixels = (uint32_t *)img->pixels;
+	for (int y=0; y<h; y+=1) {
+		int yy = vflip ? (h - y - 1) : y;
+		uint32_t * dlp = &(pixels[yy * img->stride]);
+		int32_t ret = ndz_fread_U8str(fp, pxbuf, w);
+		FREAD_CHECK_ERROR(ret);
+
+		for (int k=0; k<w; k+=1) {
+			uint8_t idx = pxbuf[k];
+			uint32_t c = coltbl[idx];
+			dlp[k] = c;
+		}
+	}
+
+ERR_EXIT:
+	if (pxbuf != NULL) {
+		free(pxbuf);
+	}
+
+	if (coltbl != NULL) {
+		free(coltbl);
+	}
+
+	if (err) {
+		if (img != NULL) {
+			BitmapImage_Free(img);
+			img = NULL;
+		}
+	}
+	return img;
+}
+
 
 static BitmapImage_t *
 TGA_load_fullcolor_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, int bpp, int vflip)
@@ -443,8 +585,7 @@ load_tga(const char * filename)
 			goto ERR_EXIT;
 		}
 
-		/* NOT YET IMPLEMENTED */
-
+		img = TGA_load_colormapped_image(fp, &hdr, w, h, bpp, vflip);
 		break;
 
 	case TGA_TYPE_COLOR:
