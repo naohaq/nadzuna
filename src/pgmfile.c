@@ -189,7 +189,7 @@ save_pgm(const char * filename, BitmapImage_t * img)
 
 			for (int j=0; j<width; j+=1) {
 				uint32_t c = slp[j];
-				yuv444_color_t s = RGB_to_YUV(c);
+				yuv_color_t s = RGB_to_YUV(c);
 				out_buf[j] = s.y;
 			}
 

@@ -25,13 +25,13 @@ enum T_COLOR_FORMAT {
 
 typedef enum T_COLOR_FORMAT ColorFormat_t;
 
-struct T_YUV444_COLOR {
+struct T_YUV_COLOR {
 	uint8_t y;
 	uint8_t u;
 	uint8_t v;
 };
 
-typedef struct T_YUV444_COLOR yuv444_color_t;
+typedef struct T_YUV_COLOR yuv_color_t;
 typedef struct T_BITMAP_IMAGE BitmapImage_t;
 
 static inline uint32_t
@@ -46,8 +46,8 @@ combine_ARGB(uint8_t a, uint8_t r, uint8_t g, uint8_t b)
 }
 
 extern int32_t GetBytePerPixel_of_Format(ColorFormat_t fmt);
-extern yuv444_color_t RGB_to_YUV(uint32_t rgb);
-extern uint32_t YUV_to_RGB(yuv444_color_t s);
+extern yuv_color_t RGB_to_YUV(uint32_t rgb);
+extern uint32_t YUV_to_RGB(yuv_color_t s);
 
 extern BitmapImage_t * convert_RGB888_to_Y8(BitmapImage_t * src_img);
 extern BitmapImage_t * convert_Y8_to_RGB888(BitmapImage_t * src_img);

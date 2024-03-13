@@ -46,7 +46,7 @@ main(int argc, char * argv[])
 					uint32_t parity = ((j>>4)&0x01) ^ ((k>>4)&0x01);
 					uint32_t bg = parity*0x3f + 0x60;
 					uint32_t c  = src_px[k*w+j];
-					yuv444_color_t s = RGB_to_YUV(c);
+					yuv_color_t s = RGB_to_YUV(c);
 					uint32_t a  = (c & 0xff000000) >> 24;
 					uint32_t y  = ((255 - a)*bg + a*s.y) / 255;
 					dst_px[k*w+j] = (uint8_t)y;

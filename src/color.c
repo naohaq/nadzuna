@@ -36,7 +36,7 @@ GetBytePerPixel_of_Format(ColorFormat_t fmt)
 }
 
 
-yuv444_color_t
+yuv_color_t
 RGB_to_YUV(uint32_t rgb)
 {
 	const uint32_t r = (rgb & 0x00ff0000U) >> 16;
@@ -55,7 +55,7 @@ RGB_to_YUV(uint32_t rgb)
 	const int32_t u = (int32_t)floorf(fu);
 	const int32_t v = (int32_t)floorf(fv);
 
-	yuv444_color_t result;
+	yuv_color_t result;
 	result.y = (uint8_t)y;
 	result.u = (uint8_t)(u+128);
 	result.v = (uint8_t)(v+128);
@@ -64,7 +64,7 @@ RGB_to_YUV(uint32_t rgb)
 }
 
 uint32_t
-YUV_to_RGB(yuv444_color_t s)
+YUV_to_RGB(yuv_color_t s)
 {
 	const float32_t fy = (float32_t)s.y;
 	const float32_t fu = (float32_t)((int32_t)s.u - 128);
@@ -122,7 +122,7 @@ convert_RGB888_to_Y8(BitmapImage_t * src_img)
 		uint32_t * slp = &(pixels[k * stride]);
 		uint8_t  * dlp = &(((uint8_t *)dst_img->pixels)[k * width]);
 		for (j=0; j<width; j+=1) {
-			yuv444_color_t c = RGB_to_YUV(slp[j]);
+			yuv_color_t c = RGB_to_YUV(slp[j]);
 			dlp[j] = c.y;
 		}
 	}
@@ -162,7 +162,7 @@ convert_Y8_to_RGB888(BitmapImage_t * src_img)
 		uint8_t  * slp = &(pixels[k * stride]);
 		uint32_t * dlp = &(((uint32_t *)dst_img->pixels)[k * width]);
 		for (j=0; j<width; j+=1) {
-			yuv444_color_t s;
+			yuv_color_t s;
 			s.y = slp[j];
 			s.u = 128;
 			s.v = 128;
