@@ -585,6 +585,12 @@ load_tga(const char * filename)
 			goto ERR_EXIT;
 		}
 
+		if (hdr.cmap_type != 1) {
+			ndz_print_error(__func__, "Color map type %d is not supported", hdr.cmap_type);
+			err = 1;
+			goto ERR_EXIT;
+		}
+
 		img = TGA_load_colormapped_image(fp, &hdr, w, h, bpp, vflip);
 		break;
 
