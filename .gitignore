@@ -1,6 +1,25 @@
 src/main
 src/tgatest
+src/pngtest
 src/tmp/
+*~
+
+Makefile
+Makefile.in
+aclocal.m4
+autom4te.cache/
+compile
+config.h
+config.log
+config.status
+configure
+depcomp
+install-sh
+missing
+src/.deps/
+src/Makefile
+src/Makefile.in
+stamp-h1
 
 # Prerequisites
 *.d
