@@ -1,6 +1,8 @@
 src/main
 src/tgatest
+src/pngtest
 src/tmp/
+*~
 
 # Prerequisites
 *.d
