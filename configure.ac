@@ -8,9 +8,12 @@ AC_LANG([C])
 AC_PROG_CC
 
 AC_CHECK_HEADER([png.h])
-AC_CHECK_LIB([png], [png_image_begin_read_from_file], , , [-lz])
+AC_CHECK_LIB([png], [png_image_begin_read_from_file], ,
+   [AC_MSG_ERROR([libpng is not found.])], [-lz])
 
 AC_CONFIG_HEADERS([config.h])
+
+CFLAGS="$CFLAGS -Wall -std=gnu99"
 
 AC_CONFIG_FILES([
  Makefile
@@ -18,3 +21,5 @@ AC_CONFIG_FILES([
 ])
 
 AC_OUTPUT
+
+# EOF
