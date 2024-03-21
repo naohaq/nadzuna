@@ -4,6 +4,7 @@ src/pngtest
 src/tmp/
 *~
 
+build/
 Makefile
 Makefile.in
 aclocal.m4
