@@ -19,7 +19,6 @@
 int
 main(int argc, char * argv[])
 {
-	int ret;
 	BitmapImage_t * img;
 
 	if (argc < 2) {

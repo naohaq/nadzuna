@@ -20,19 +20,21 @@ set(library_sources
 )
 
 add_library(nadzuna STATIC ${library_sources})
+target_link_libraries(nadzuna PUBLIC PNG::PNG)
 
 if(MATH_LIBRARY)
-  target_link_libraries(nadzuna PUBLIC PNG::PNG m)
-else(MATH_LIBRARY)
-  target_link_libraries(nadzuna PUBLIC PNG::PNG)
+  target_link_libraries(nadzuna PUBLIC m)
 endif(MATH_LIBRARY)
+target_link_libraries(nadzuna PUBLIC nadzuna_compiler_flags)
 
 target_include_directories(nadzuna PUBLIC ${PROJECT_BINARY_DIR})
 
 add_executable(pngtest pngtest.c)
 target_link_libraries(pngtest PRIVATE nadzuna)
+target_link_libraries(pngtest PUBLIC nadzuna_compiler_flags)
 
 add_executable(bmptest bmptest.c)
 target_link_libraries(bmptest PRIVATE nadzuna)
+target_link_libraries(bmptest PUBLIC nadzuna_compiler_flags)
 
 # EOF
