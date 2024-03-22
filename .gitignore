@@ -5,6 +5,7 @@ src/tmp/
 *~
 
 build/
+build-*/
 Makefile
 Makefile.in
 aclocal.m4
