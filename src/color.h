@@ -34,17 +34,6 @@ struct T_YUV_COLOR {
 typedef struct T_YUV_COLOR yuv_color_t;
 typedef struct T_BITMAP_IMAGE BitmapImage_t;
 
-static inline uint32_t
-combine_ARGB(uint8_t a, uint8_t r, uint8_t g, uint8_t b)
-{
-	uint32_t c = 0;
-	c |= ((uint32_t)a & 0x000000ff) << 24;
-	c |= ((uint32_t)r & 0x000000ff) << 16;
-	c |= ((uint32_t)g & 0x000000ff) <<  8;
-	c |= ((uint32_t)b & 0x000000ff);
-	return c;
-}
-
 extern int32_t GetBytePerPixel_of_Format(ColorFormat_t fmt);
 extern yuv_color_t RGB_to_YUV(uint32_t rgb);
 extern uint32_t YUV_to_RGB(yuv_color_t s);

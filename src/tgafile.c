@@ -14,6 +14,7 @@
 
 #include "common.h"
 #include "color.h"
+#include "color_inline.h"
 #include "bitmapimg.h"
 #include "file_io.h"
 #include "tgafile.h"

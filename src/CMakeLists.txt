@@ -4,6 +4,7 @@ set(library_sources
   bitmapimg.h
   color.c
   color.h
+  color_inline.h
   common.h
   error.c
   error.h
