@@ -12,6 +12,7 @@
 #include <string.h>
 
 #include "common.h"
+#include "color.h"
 #include "bitmapimg.h"
 #include "file_io.h"
 #include "bmpfile.h"
@@ -38,11 +39,12 @@
 		}											\
 	} while (0)										\
 
-static int32_t
+
+static int
 BMP_LoadFileHeader(BMPFileHeader_t * hdr, FILE * fp)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int ret_val = 0;
 
 	ret = ndz_fread_U8str(fp, hdr->bfType, 2);
 	FREAD_CHECK_ERROR(ret);
@@ -70,11 +72,11 @@ BMP_LoadFileHeader(BMPFileHeader_t * hdr, FILE * fp)
 }
 
 
-static int32_t
+static int
 BMP_LoadInfoHeader(BMPInfoHeader_t * hdr, FILE * fp)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int ret_val = 0;
 
 	ret = ndz_fread_U32_l(fp, &(hdr->biSize));
 	FREAD_CHECK_ERROR(ret);
@@ -122,31 +124,35 @@ BMP_LoadInfoHeader(BMPInfoHeader_t * hdr, FILE * fp)
 	return ret_val;
 }
 
-static int32_t
+static int
 BMP_LoadHeader(BMPFile_t * bmp, FILE * fp)
 {
-	int32_t ret;
+	int ret;
+	int ret_val = 0;
 	
 	ret = BMP_LoadFileHeader(&(bmp->fileHdr), fp);
 	if (ret < 0) {
 		ndz_print_error(__func__, "Can't load BMPFileHeader.");
-		return -1;
+		ret_val = -1;
+		goto ERR_EXIT;
 	}
 
 	ret = BMP_LoadInfoHeader(&(bmp->infoHdr), fp);
 	if (ret < 0) {
 		ndz_print_error(__func__, "Can't load BMPInfoHeader.");
-		return -1;
+		ret_val = -1;
+		goto ERR_EXIT;
 	}
 
 	/* skip */
 	{
-		int32_t skiplen = bmp->infoHdr.biSize - 40;
+		long skiplen = bmp->infoHdr.biSize - 40;
 		if (skiplen > 0) {
 			ret = fseek(fp, skiplen, SEEK_CUR);
 			if (ret < 0) {
 				ndz_print_strerror(__func__, "fseek");
-				return -1;
+				ret_val = -1;
+				goto ERR_EXIT;
 			}
 		}
 	}
@@ -165,121 +171,112 @@ BMP_LoadHeader(BMPFile_t * bmp, FILE * fp)
 	bmp->height    = (-1) * bmp->infoHdr.biHeight * bmp->direction;
 
 	bmp->pixels = NULL;
-	
-	return 0;
+
+ERR_EXIT:
+	return ret_val;
 }
 
-static int32_t
+static int
 BMP_LoadPixels(BMPFile_t * bmp, FILE * fp)
 {
-	int32_t ret_val = 0;
-	int32_t ret;
-	uint8_t * line_buf;
-	int32_t pixel_count;
-	int32_t width = bmp->width;
-	int32_t bpp = bmp->bpp;
+	int err = 0;
+	int ret_val = 0;
+	int ret;
+
+	uint8_t * line_buf = NULL;
+	uint32_t * pixels = NULL;
+
+	int32_t width  = bmp->width;
+	int32_t height = bmp->height;
+	int32_t bpp    = bmp->bpp;
 	int32_t padded_bytewidth = bmp->padded_bytewidth;
 
 	if (!(bpp == 24 || bpp == 32) || (bmp->infoHdr.biCompression != 0)) {
 		ndz_print_error(__func__, "%dbpp is not supported.", bpp);
-		return -1;
+		err = 1;
+		goto ERR_EXIT;
 	}
 
 	line_buf = malloc(padded_bytewidth);
 	if (line_buf == NULL) {
 		ndz_print_error(__func__, "Memory allocation failed.");
-		return -1;
+		err = 1;
+		goto ERR_EXIT;
 	}
 
-	pixel_count = width * bmp->height;
-	bmp->pixels = malloc(sizeof(uint32_t)*pixel_count);
-	if (bmp->pixels == NULL) {
+	int32_t pixel_count = width * height;
+	pixels = malloc(sizeof(uint32_t)*pixel_count);
+	if (pixels == NULL) {
 		ndz_print_error(__func__, "Memory allocation failed.");
-		free(line_buf);
-		return -1;
+		err = 1;
+		goto ERR_EXIT;
 	}
 
 	ret = fseek(fp, bmp->fileHdr.bfOffBits, SEEK_SET);
 	if (ret < 0) {
 		ndz_print_strerror(__func__, "fseek");
-		return -1;
+		err = 1;
+		goto ERR_EXIT;
 	}
 
-	{
-		int32_t i;
-		uint32_t * lp;
-		int32_t line_skip;
+	for (int i=0; i<height; i++) {
+		int yy = (bmp->direction < 0) ? (height - i - 1) : i;
+		uint32_t * lp = &(pixels[yy*width]);
 
-		if (bmp->direction < 0) {
-			lp = bmp->pixels + width * (bmp->height - 1);
-			line_skip = -width;
-		}
-		else {
-			lp = bmp->pixels;
-			line_skip = width;
-		}
-
-		for (i=0; i<bmp->height; i++) {
-			ret = fread(line_buf, 1, padded_bytewidth, fp);
-			if (ret < padded_bytewidth) {
-				if (feof(fp)) {
-					ndz_print_error(__func__, "Unexpected EOF when reading line %d: %d", i+1, ret);
-					free(bmp->pixels);
-					bmp->pixels = NULL;
-					ret_val = -1;
-					break;
-				}
-				else {
-					ndz_print_strerror(__func__, "fread");
-					free(bmp->pixels);
-					bmp->pixels = NULL;
-					ret_val = -1;
-					break;
-				}
+		ret = fread(line_buf, 1, padded_bytewidth, fp);
+		if (ret < padded_bytewidth) {
+			if (feof(fp)) {
+				ndz_print_error(__func__, "Unexpected EOF on reading line %d", i+1);
+				err = 1;
+				goto ERR_EXIT;
 			}
-
-			if (bpp == 24) {
-				int32_t j;
-				for (j=0; j<width; j++) {
-					uint32_t c = 0x00000000U;
-					uint32_t b = line_buf[j*3+0];
-					uint32_t g = line_buf[j*3+1];
-					uint32_t r = line_buf[j*3+2];
-					c  = (r&0x0ffU)<<16;
-					c |= (g&0x0ffU)<< 8;
-					c |= (b&0x0ffU);
-					lp[j] = c;
-				}
+			else {
+				ndz_print_strerror(__func__, "fread");
+				err = 1;
+				goto ERR_EXIT;
 			}
-			else if (bpp == 32) {
-				int32_t j;
-				for (j=0; j<width; j++) {
-					uint32_t c = 0x00000000U;
-					uint32_t b = line_buf[j*4+0];
-					uint32_t g = line_buf[j*4+1];
-					uint32_t r = line_buf[j*4+2];
-					c  = (r&0x0ffU)<<16;
-					c |= (g&0x0ffU)<< 8;
-					c |= (b&0x0ffU);
-					lp[j] = c;
-				}
-			}
-
-			lp += line_skip;
 		}
 
+		if (bpp == 24) {
+			for (int j=0; j<width; j++) {
+				uint32_t b = line_buf[j*3+0];
+				uint32_t g = line_buf[j*3+1];
+				uint32_t r = line_buf[j*3+2];
+				lp[j] = combine_ARGB(0xff,r,g,b);
+			}
+		}
+		else if (bpp == 32) {
+			for (int j=0; j<width; j++) {
+				uint32_t b = line_buf[j*4+0];
+				uint32_t g = line_buf[j*4+1];
+				uint32_t r = line_buf[j*4+2];
+				lp[j] = combine_ARGB(0xff,r,g,b);
+			}
+		}
+	}
+
+	bmp->pixels = pixels;
+
+ERR_EXIT:
+	if (line_buf != NULL) {
 		free(line_buf);
+	}
+	if (err) {
+		if (pixels != NULL) {
+			free(pixels);
+		}
+		ret_val = -1;
 	}
 
 	return ret_val;
 }
 
 
-int32_t
+int
 load_bmp(const char_t * filename, BitmapImage_t * img)
 {
-	int32_t ret;
-	int32_t ret_val = 0;
+	int ret;
+	int ret_val = 0;
 	BMPFile_t bmp;
 	FILE * fp;
 
@@ -292,37 +289,39 @@ load_bmp(const char_t * filename, BitmapImage_t * img)
 	if (fp == NULL) {
 		ndz_print_strerror(__func__, "fopen");
 		ret_val = -1;
+		goto ERR_EXIT;
 	}
-	else {
-		ret = BMP_LoadHeader(&bmp, fp);
-		if (ret < 0) {
-			ndz_print_error(__func__, "Failed to load BMP header...");
-			ret_val = -1;
-		}
-		else {
-			ret = BMP_LoadPixels(&bmp, fp);
-			if (ret < 0) {
-				ndz_print_error(__func__, "Failed to load BMP pixels...");
-				ret_val = -1;
-			}
-		}
 
+	ret = BMP_LoadHeader(&bmp, fp);
+	if (ret < 0) {
+		ndz_print_error(__func__, "Failed to load BMP header...");
+		ret_val = -1;
+		goto ERR_EXIT;
+	}
+
+	ret = BMP_LoadPixels(&bmp, fp);
+	if (ret < 0) {
+		ndz_print_error(__func__, "Failed to load BMP pixels...");
+		ret_val = -1;
+		goto ERR_EXIT;
+	}
+
+	img->fmt    = COLORFMT_ARGB8888_32;
+	img->pixels = bmp.pixels;
+	img->width  = bmp.width;
+	img->height = bmp.height;
+	img->stride = bmp.width;
+	img->bpp    = 24;
+	img->align  = 2;
+
+ERR_EXIT:
+	if (fp != NULL) {
 		fclose(fp);
-
-		if (! (ret_val < 0)) {
-			img->pixels = bmp.pixels;
-			img->width  = bmp.width;
-			img->height = bmp.height;
-			img->stride = 0;
-			img->bpp    = 24;
-			img->align  = 2;
-		}
 	}
-
 	return ret_val;
 }
 
-static int32_t
+static int
 BMP_SetInfoHeader(BMPFile_t * bmp)
 {
 	bmp->infoHdr.biSize         = 40; /* Fixed number */
@@ -340,7 +339,7 @@ BMP_SetInfoHeader(BMPFile_t * bmp)
 	return 0;
 }
 
-static int32_t
+static int
 BMP_SetFileHeader(BMPFile_t * bmp)
 {
 	bmp->fileHdr.bfType[0]   = 'B';
@@ -353,11 +352,11 @@ BMP_SetFileHeader(BMPFile_t * bmp)
 	return 0;
 }
 
-static int32_t
+static int
 BMP_StoreFileHeader(BMPFileHeader_t * hdr, FILE * fp)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int ret_val = 0;
 
 	ret = ndz_fwrite_U8str(fp, hdr->bfType, 2);
 	FWRITE_CHECK_ERROR(ret);
@@ -378,11 +377,11 @@ BMP_StoreFileHeader(BMPFileHeader_t * hdr, FILE * fp)
 	return ret_val;
 }
 
-static int32_t
+static int
 BMP_StoreInfoHeader(BMPInfoHeader_t * hdr, FILE * fp)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int ret_val = 0;
 
 	ret = ndz_fwrite_U32_l(fp, hdr->biSize);
 	FWRITE_CHECK_ERROR(ret);
@@ -421,94 +420,91 @@ BMP_StoreInfoHeader(BMPInfoHeader_t * hdr, FILE * fp)
 	return ret_val;
 }
 
-static int32_t
+static int
 BMP_StorePixels(BMPFile_t * bmp, const uint32_t * pixels, FILE * fp)
 {
-	int32_t ret;
-	int32_t ret_val = 0;
-	uint8_t * line_buf;
+	int ret_val = 0;
+
+	uint8_t * line_buf = NULL;
 	int32_t stride = bmp->stride;
-	int32_t width = bmp->width;
-	int32_t bpp = bmp->bpp;
+	int32_t width  = bmp->width;
+	int32_t height = bmp->height;
+	int32_t bpp    = bmp->bpp;
 	int32_t padded_bytewidth = bmp->padded_bytewidth;
 	const int32_t y_scale = 1;
 
 	line_buf = malloc(padded_bytewidth);
 	if (line_buf == NULL) {
-		ndz_print_error(__func__, "Memory allocation error.");
+		ndz_print_error(__func__, "Memory allocation failed.");
 		ret_val = -1;
+		goto ERR_EXIT;
+	}
+
+	const uint32_t * lp;
+	int32_t line_skip;
+
+	if (bmp->direction < 0) {
+		lp = pixels + stride * (height/y_scale - 1);
+		line_skip = -stride;
 	}
 	else {
-		int32_t i;
-		int32_t k;
-		const uint32_t * lp;
-		int32_t line_skip;
-
-		if (bmp->direction < 0) {
-			lp = pixels + stride * (bmp->height/y_scale - 1);
-			line_skip = -stride;
-		}
-		else {
-			lp = pixels;
-			line_skip = stride;
-		}
-
-		for (i=0; i<bmp->height; i+=y_scale) {
-			if (bpp == 24) {
-				int32_t j;
-				for (j=0; j<width; j++) {
-					uint32_t c = lp[j];
-					uint32_t b = (c & 0x000000ffU);
-					uint32_t g = (c & 0x0000ff00U) >>  8;
-					uint32_t r = (c & 0x00ff0000U) >> 16;
-					line_buf[j*3+0] = (uint8_t)b;
-					line_buf[j*3+1] = (uint8_t)g;
-					line_buf[j*3+2] = (uint8_t)r;
-				}
-			}
-			else if (bpp == 32) {
-				int32_t j;
-				for (j=0; j<width; j++) {
-					uint32_t c = lp[j];
-					uint32_t b = (c & 0x000000ffU);
-					uint32_t g = (c & 0x0000ff00U) >>  8;
-					uint32_t r = (c & 0x00ff0000U) >> 16;
-					line_buf[j*4+0] = (uint8_t)b;
-					line_buf[j*4+1] = (uint8_t)g;
-					line_buf[j*4+2] = (uint8_t)r;
-					line_buf[j*4+3] = 0;
-				}
-			}
-
-			for (k=0; k<y_scale; k+=1) {
-				ret = fwrite(line_buf, 1, padded_bytewidth, fp);
-				if (ret < padded_bytewidth) {
-					ndz_print_strerror(__func__, "fwrite");
-					ret_val = -1;
-					break;
-				}
-			}
-
-			if (ret_val < 0) {
-				break;
-			}
-
-			lp += line_skip;
-		}		
-
-		free(line_buf);
+		lp = pixels;
+		line_skip = stride;
 	}
 
+	for (int i=0; i<bmp->height; i+=y_scale) {
+		if (bpp == 24) {
+			for (int j=0; j<width; j++) {
+				uint32_t c = lp[j];
+				uint32_t b = (c & 0x000000ffU);
+				uint32_t g = (c & 0x0000ff00U) >>  8;
+				uint32_t r = (c & 0x00ff0000U) >> 16;
+				line_buf[j*3+0] = (uint8_t)b;
+				line_buf[j*3+1] = (uint8_t)g;
+				line_buf[j*3+2] = (uint8_t)r;
+			}
+
+		}
+		else if (bpp == 32) {
+			for (int j=0; j<width; j++) {
+				uint32_t c = lp[j];
+				uint32_t b = (c & 0x000000ffU);
+				uint32_t g = (c & 0x0000ff00U) >>  8;
+				uint32_t r = (c & 0x00ff0000U) >> 16;
+				line_buf[j*4+0] = (uint8_t)b;
+				line_buf[j*4+1] = (uint8_t)g;
+				line_buf[j*4+2] = (uint8_t)r;
+				line_buf[j*4+3] = 0;
+			}
+
+		}
+
+		for (int k=0; k<y_scale; k+=1) {
+			size_t ret = fwrite(line_buf, 1, padded_bytewidth, fp);
+			if (ret < padded_bytewidth) {
+				ndz_print_strerror(__func__, "fwrite");
+				ret_val = -1;
+				goto ERR_EXIT;
+			}
+		}
+
+		lp += line_skip;
+	}		
+
+ERR_EXIT:
+	if (line_buf != NULL) {
+		free(line_buf);
+	}
 	return ret_val;
 }
 
-int32_t
+int
 save_bmp24(const char_t * filename, const uint32_t * pixels, int32_t w, int32_t stride, int32_t h)
 {
-	int32_t ret;
-	int32_t ret_val = 0;
+	int ret;
+	int ret_val = 0;
 	BMPFile_t bmp;
-	FILE * fp;
+	FILE * fp = NULL;
 
 	assert(filename != NULL);
 	assert(pixels != NULL);
@@ -540,32 +536,33 @@ save_bmp24(const char_t * filename, const uint32_t * pixels, int32_t w, int32_t 
 	if (fp == NULL) {
 		ndz_print_strerror(__func__, "fopen");
 		ret_val = -1;
+		goto ERR_EXIT;
 	}
-	else {
-		ret = BMP_StoreFileHeader(&(bmp.fileHdr), fp);
-		if (ret < 0) {
-			ndz_print_error(__func__, "Failed to write file header.");
-			ret_val = -1;
-		}
-		else {
-			ret = BMP_StoreInfoHeader(&(bmp.infoHdr), fp);
-			if (ret < 0) {
-				ndz_print_error(__func__, "Failed to write info header.");
-				ret_val = -1;
-			}
-			else {
-				ret = BMP_StorePixels(&bmp, pixels, fp);
-				if (ret < 0) {
-					ndz_print_error(__func__, "Failed to write pixels.");
-					ret_val = 1;
-				}
-			}
-		}
 
+	ret = BMP_StoreFileHeader(&(bmp.fileHdr), fp);
+	if (ret < 0) {
+		ndz_print_error(__func__, "Failed to write file header.");
+		ret_val = -1;
+		goto ERR_EXIT;
+	}
+
+	ret = BMP_StoreInfoHeader(&(bmp.infoHdr), fp);
+	if (ret < 0) {
+		ndz_print_error(__func__, "Failed to write info header.");
+		ret_val = -1;
+		goto ERR_EXIT;
+	}
+
+	ret = BMP_StorePixels(&bmp, pixels, fp);
+	if (ret < 0) {
+		ndz_print_error(__func__, "Failed to write pixels.");
+		ret_val = -1;
+	}
+
+ERR_EXIT:
+	if (fp != NULL) {
 		fclose(fp);
 	}
-
- ERR_EXIT:
 	return ret_val;
 }
 

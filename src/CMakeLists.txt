@@ -15,6 +15,8 @@ set(library_sources
   pngfile.h
   tgafile.c
   tgafile.h
+  bmpfile.c
+  bmpfile.h
 )
 
 add_library(nadzuna STATIC ${library_sources})
@@ -29,5 +31,8 @@ target_include_directories(nadzuna PUBLIC ${PROJECT_BINARY_DIR})
 
 add_executable(pngtest pngtest.c)
 target_link_libraries(pngtest PRIVATE nadzuna)
+
+add_executable(bmptest bmptest.c)
+target_link_libraries(bmptest PRIVATE nadzuna)
 
 # EOF
