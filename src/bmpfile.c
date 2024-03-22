@@ -67,7 +67,7 @@ BMP_LoadFileHeader(BMPFileHeader_t * hdr, FILE * fp)
 		FREAD_CHECK_ERROR(ret);
 	}
 
- ERR_EXIT:
+ERR_EXIT:
 	return ret_val;
 }
 
@@ -120,7 +120,7 @@ BMP_LoadInfoHeader(BMPInfoHeader_t * hdr, FILE * fp)
 		FREAD_CHECK_ERROR(ret);
 	}
 
- ERR_EXIT:
+ERR_EXIT:
 	return ret_val;
 }
 
@@ -170,21 +170,18 @@ BMP_LoadHeader(BMPFile_t * bmp, FILE * fp)
 	bmp->padded_bytewidth = (bmp->bytewidth + 3) & 0x7ffffffc;
 	bmp->height    = (-1) * bmp->infoHdr.biHeight * bmp->direction;
 
-	bmp->pixels = NULL;
-
 ERR_EXIT:
 	return ret_val;
 }
 
 static int
-BMP_LoadPixels(BMPFile_t * bmp, FILE * fp)
+BMP_LoadPixels(BMPFile_t * bmp, uint32_t * pixels, FILE * fp)
 {
 	int err = 0;
 	int ret_val = 0;
 	int ret;
 
 	uint8_t * line_buf = NULL;
-	uint32_t * pixels = NULL;
 
 	int32_t width  = bmp->width;
 	int32_t height = bmp->height;
@@ -199,14 +196,6 @@ BMP_LoadPixels(BMPFile_t * bmp, FILE * fp)
 
 	line_buf = malloc(padded_bytewidth);
 	if (line_buf == NULL) {
-		ndz_print_error(__func__, "Memory allocation failed.");
-		err = 1;
-		goto ERR_EXIT;
-	}
-
-	int32_t pixel_count = width * height;
-	pixels = malloc(sizeof(uint32_t)*pixel_count);
-	if (pixels == NULL) {
 		ndz_print_error(__func__, "Memory allocation failed.");
 		err = 1;
 		goto ERR_EXIT;
@@ -255,16 +244,11 @@ BMP_LoadPixels(BMPFile_t * bmp, FILE * fp)
 		}
 	}
 
-	bmp->pixels = pixels;
-
 ERR_EXIT:
 	if (line_buf != NULL) {
 		free(line_buf);
 	}
 	if (err) {
-		if (pixels != NULL) {
-			free(pixels);
-		}
 		ret_val = -1;
 	}
 
@@ -272,54 +256,59 @@ ERR_EXIT:
 }
 
 
-int
-load_bmp(const char_t * filename, BitmapImage_t * img)
+BitmapImage_t *
+load_bmp(const char_t * filename)
 {
 	int ret;
-	int ret_val = 0;
+	int err = 0;
+	BitmapImage_t * img = NULL;
 	BMPFile_t bmp;
 	FILE * fp;
 
 	assert(filename != NULL);
-	assert(img != NULL);
-
-	img->pixels = NULL;
 
 	fp = fopen(filename, "rb");
 	if (fp == NULL) {
 		ndz_print_strerror(__func__, "fopen");
-		ret_val = -1;
+		err = 1;
 		goto ERR_EXIT;
 	}
 
 	ret = BMP_LoadHeader(&bmp, fp);
 	if (ret < 0) {
 		ndz_print_error(__func__, "Failed to load BMP header...");
-		ret_val = -1;
+		err = 1;
 		goto ERR_EXIT;
 	}
 
-	ret = BMP_LoadPixels(&bmp, fp);
+	img = BitmapImage_Create(bmp.width, 0, bmp.height, 32, COLORFMT_ARGB8888_32);
+	if (img == NULL) {
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+	ret = BMP_LoadPixels(&bmp, img->pixels, fp);
 	if (ret < 0) {
 		ndz_print_error(__func__, "Failed to load BMP pixels...");
-		ret_val = -1;
+		err = 1;
 		goto ERR_EXIT;
 	}
-
-	img->fmt    = COLORFMT_ARGB8888_32;
-	img->pixels = bmp.pixels;
-	img->width  = bmp.width;
-	img->height = bmp.height;
-	img->stride = bmp.width;
-	img->bpp    = 24;
-	img->align  = 2;
 
 ERR_EXIT:
 	if (fp != NULL) {
 		fclose(fp);
 	}
-	return ret_val;
+
+	if (err) {
+		if (img != NULL) {
+			BitmapImage_Free(img);
+			img = NULL;
+		}
+	}
+
+	return img;
 }
+
 
 static int
 BMP_SetInfoHeader(BMPFile_t * bmp)
@@ -339,6 +328,7 @@ BMP_SetInfoHeader(BMPFile_t * bmp)
 	return 0;
 }
 
+
 static int
 BMP_SetFileHeader(BMPFile_t * bmp)
 {
@@ -351,6 +341,7 @@ BMP_SetFileHeader(BMPFile_t * bmp)
 
 	return 0;
 }
+
 
 static int
 BMP_StoreFileHeader(BMPFileHeader_t * hdr, FILE * fp)
@@ -373,9 +364,10 @@ BMP_StoreFileHeader(BMPFileHeader_t * hdr, FILE * fp)
 	ret = ndz_fwrite_U32_l(fp, hdr->bfOffBits);
 	FWRITE_CHECK_ERROR(ret);
 
- ERR_EXIT:
+ERR_EXIT:
 	return ret_val;
 }
+
 
 static int
 BMP_StoreInfoHeader(BMPInfoHeader_t * hdr, FILE * fp)
@@ -416,9 +408,10 @@ BMP_StoreInfoHeader(BMPInfoHeader_t * hdr, FILE * fp)
 	ret = ndz_fwrite_U32_l(fp, hdr->biClrImportant);
 	FWRITE_CHECK_ERROR(ret);
 
- ERR_EXIT:
+ERR_EXIT:
 	return ret_val;
 }
+
 
 static int
 BMP_StorePixels(BMPFile_t * bmp, const uint32_t * pixels, FILE * fp)
@@ -498,6 +491,7 @@ ERR_EXIT:
 	return ret_val;
 }
 
+
 int
 save_bmp24(const char_t * filename, const uint32_t * pixels, int32_t w, int32_t stride, int32_t h)
 {
@@ -526,8 +520,6 @@ save_bmp24(const char_t * filename, const uint32_t * pixels, int32_t w, int32_t 
 
 	bmp.bytewidth = (bmp.width * bmp.bpp)>>3;
 	bmp.padded_bytewidth = (bmp.bytewidth + 3) & 0x7ffffffc;
-
-	bmp.pixels = NULL;
 
 	BMP_SetInfoHeader(&bmp);
 	BMP_SetFileHeader(&bmp);

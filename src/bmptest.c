@@ -20,21 +20,21 @@ int
 main(int argc, char * argv[])
 {
 	int ret;
-	BitmapImage_t img;
+	BitmapImage_t * img;
 
 	if (argc < 2) {
 		exit(1);
 	}
 
-	ret = load_bmp(argv[1], &img);
-	if (ret < 0) {
+	img = load_bmp(argv[1]);
+	if (img == NULL) {
 		fprintf(stderr, "%s: failed to load image.\n", argv[1]);
 		exit(1);
 	}
-	fprintf(stderr, "load_bmp(...) = %d\n", ret);
+	fprintf(stderr, "load_bmp(...) = %p\n", img);
 
 	fprintf(stderr, "Output result...\n");
-	save_tga("tmp/output.tga", &img);
+	save_tga("tmp/output.tga", img);
 
 	return 0;
 }

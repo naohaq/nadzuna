@@ -48,12 +48,11 @@ struct T_BMPFILE {
 	int32_t bytewidth;
 	int32_t padded_bytewidth;
 	int32_t height;
-	uint32_t * pixels;
 };
 
 typedef struct T_BMPFILE BMPFile_t;
 
-extern int load_bmp(const char_t * filename, BitmapImage_t * img);
+extern BitmapImage_t * load_bmp(const char_t * filename);
 extern int save_bmp24(const char_t * filename, const uint32_t * pixels, int32_t w, int32_t stride, int32_t h);
 
 #ifdef __cplusplus
