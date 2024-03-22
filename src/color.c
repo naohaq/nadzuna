@@ -23,7 +23,7 @@ GetBytePerPixel_of_Format(ColorFormat_t fmt)
 
 	switch (fmt) {
 	case COLORFMT_ARGB8888_32: byte_per_pixel = 4; break;
-	case COLORFMT_BGR888_32:   byte_per_pixel = 4; break;
+	case COLORFMT_BGRA8888_32: byte_per_pixel = 4; break;
 	case COLORFMT_RGB565_16:   byte_per_pixel = 2; break;
 	case COLORFMT_ARGB1555_16: byte_per_pixel = 2; break;
 	case COLORFMT_YUV444_32:   byte_per_pixel = 4; break;
