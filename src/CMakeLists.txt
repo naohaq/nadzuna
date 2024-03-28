@@ -20,7 +20,11 @@ set(library_sources
   bmpfile.h
 )
 
-add_library(nadzuna STATIC ${library_sources})
+add_library(nadzuna SHARED ${library_sources})
+
+# Set the symbol defined when compiled as a shared library.
+set_target_properties(nadzuna PROPERTIES DEFINE_SYMBOL NADZUNA_EXPORTS)
+
 target_link_libraries(nadzuna PUBLIC PNG::PNG)
 
 if(MATH_LIBRARY)
@@ -31,11 +35,13 @@ target_link_libraries(nadzuna PUBLIC nadzuna_compiler_flags)
 target_include_directories(nadzuna PUBLIC ${PROJECT_BINARY_DIR})
 
 add_executable(pngtest pngtest.c)
-target_link_libraries(pngtest PRIVATE nadzuna)
-target_link_libraries(pngtest PUBLIC nadzuna_compiler_flags)
+target_link_libraries(pngtest
+  PRIVATE nadzuna
+  PUBLIC nadzuna_compiler_flags)
 
 add_executable(bmptest bmptest.c)
-target_link_libraries(bmptest PRIVATE nadzuna)
-target_link_libraries(bmptest PUBLIC nadzuna_compiler_flags)
+target_link_libraries(bmptest
+  PRIVATE nadzuna
+  PUBLIC nadzuna_compiler_flags)
 
 # EOF
