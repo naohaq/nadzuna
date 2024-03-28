@@ -1,7 +1,6 @@
-src/main
-src/tgatest
-src/pngtest
-src/tmp/
+bin/tgatest
+bin/pngtest
+bin/tmp/
 *~
 
 build/

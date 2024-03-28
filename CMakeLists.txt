@@ -25,6 +25,7 @@ target_compile_options(nadzuna_compiler_flags INTERFACE
   $<$<C_COMPILER_ID:GNU,Clang,AppleClang>:-Wall>
 )
 
-add_subdirectory(src)
+add_subdirectory(lib)
+add_subdirectory(bin)
 
 # EOF
