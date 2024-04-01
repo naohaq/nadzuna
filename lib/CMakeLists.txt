@@ -1,8 +1,7 @@
 
 set(library_sources
   nadzuna.h
-  bitmapimg.c
-  bitmapimg.h
+  image.c
   color.c
   color.h
   color_inline.h
@@ -12,7 +11,6 @@ set(library_sources
   file_io.c
   file_io.h
   pgmfile.c
-  pgmfile.h
   pngfile.c
   pngfile.h
   tgafile.c

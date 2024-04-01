@@ -15,7 +15,6 @@
 
 #include "common.h"
 #include "color.h"
-#include "pgmfile.h"
 #include "error.h"
 
 NADZUNA_API ndz_image_t *
