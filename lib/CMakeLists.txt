@@ -25,6 +25,7 @@ add_library(nadzuna SHARED ${library_sources})
 
 # Set the symbol defined when compiled as a shared library.
 set_target_properties(nadzuna PROPERTIES DEFINE_SYMBOL NADZUNA_BUILD)
+set_target_properties(nadzuna PROPERTIES C_VISIBILITY_PRESET hidden)
 
 target_link_libraries(nadzuna PUBLIC PNG::PNG)
 

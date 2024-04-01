@@ -39,7 +39,7 @@ extern "C" {
 #endif /* NADZUNA_API */
 
 
-enum T_COLOR_FORMAT {
+enum T_NDZ_COLOR_FORMAT {
 	COLORFMT_ARGB8888_32 = 0,
 #define COLORFMT_RGB888_32 COLORFMT_ARGB8888_32
 	COLORFMT_BGRA8888_32  = 1,
@@ -51,7 +51,7 @@ enum T_COLOR_FORMAT {
 	COLORFMT_Y8          = 6,
 };
 
-typedef enum T_COLOR_FORMAT ColorFormat_t;
+typedef enum T_NDZ_COLOR_FORMAT ColorFormat_t;
 
 struct T_YUV_COLOR {
 	uint8_t y;
