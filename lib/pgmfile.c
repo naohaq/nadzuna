@@ -22,11 +22,7 @@ ndz_load_pgm(const char * filename)
 {
 	ndz_image_t * img = NULL;
 	FILE * fp;
-	int32_t k;
-	int32_t err;
-	int w;
-	int h;
-	int32_t stride;
+	int err = 1;
 	char buf[80];
 
 	fp = fopen(filename, "rb");
@@ -51,6 +47,8 @@ ndz_load_pgm(const char * filename)
 		goto ERR_EXIT;
 	}
 
+	int w;
+	int h;
 	if (fgets(buf, 80, fp) != NULL) {
 		int ret;
 		ret = sscanf(buf, "%d %d", &w, &h);
@@ -85,19 +83,19 @@ ndz_load_pgm(const char * filename)
 		goto ERR_EXIT;
 	}
 
-	img = malloc(sizeof(ndz_image_t));
-	
-	img->width  = w;
-	img->height = h;
-	stride = (w + 3) & 0x7ffffffc;
-	img->stride = stride;
-	img->bpp    = 8;
-	img->fmt    = COLORFMT_Y8;
+	if (! IMG_CHECK_DIMENSIONS(w, h)) {
+		ndz_print_error(__func__, "Image size is out of range: %d x %d", w, h);
+		goto ERR_EXIT;
+	}
 
-	img->pixels = malloc(stride * h);
+	int32_t stride = (w + 3) & 0x7ffffffc;
+	img = ndz_image_create(w, stride, h, 8, COLORFMT_Y8);
+	if (img == NULL) {
+		goto ERR_EXIT;
+	}
 
 	err = 0;
-	for (k=0; k<h; k+=1) {
+	for (int k=0; k<h; k+=1) {
 		int32_t ret;
 
 		ret = fread(&(((uint8_t *)img->pixels)[k * stride]), 1, w, fp);
@@ -113,13 +111,14 @@ ndz_load_pgm(const char * filename)
 		}
 	}
 
-	if (err) {
-		free(img->pixels);
-		free(img);
-		img = NULL;
-	}
-
 ERR_EXIT:
+	if (err) {
+		if (img != NULL) {
+			free(img->pixels);
+			free(img);
+			img = NULL;
+		}
+	}
 	if (fp != NULL) {
 		fclose(fp);
 	}

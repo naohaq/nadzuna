@@ -14,4 +14,9 @@ target_link_libraries(tgatest
   PRIVATE nadzuna
   PUBLIC nadzuna_compiler_flags)
 
+add_executable(pgmtest pgmtest.c)
+target_link_libraries(pgmtest
+  PRIVATE nadzuna
+  PUBLIC nadzuna_compiler_flags)
+
 # EOF
