@@ -11,10 +11,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nadzuna.h"
+
 #include "common.h"
 #include "color.h"
 #include "color_inline.h"
-#include "bitmapimg.h"
 #include "file_io.h"
 #include "bmpfile.h"
 #include "error.h"
@@ -257,12 +258,12 @@ ERR_EXIT:
 }
 
 
-BitmapImage_t *
-load_bmp(const char_t * filename)
+NADZUNA_API ndz_image_t *
+ndz_load_bmp(const char * filename)
 {
 	int ret;
 	int err = 0;
-	BitmapImage_t * img = NULL;
+	ndz_image_t * img = NULL;
 	BMPFile_t bmp;
 	FILE * fp;
 
@@ -282,7 +283,7 @@ load_bmp(const char_t * filename)
 		goto ERR_EXIT;
 	}
 
-	img = BitmapImage_Create(bmp.width, 0, bmp.height, 32, COLORFMT_ARGB8888_32);
+	img = ndz_image_create(bmp.width, 0, bmp.height, 32, COLORFMT_ARGB8888_32);
 	if (img == NULL) {
 		err = 1;
 		goto ERR_EXIT;
@@ -302,7 +303,7 @@ ERR_EXIT:
 
 	if (err) {
 		if (img != NULL) {
-			BitmapImage_Free(img);
+			ndz_image_free(img);
 			img = NULL;
 		}
 	}
@@ -493,8 +494,8 @@ ERR_EXIT:
 }
 
 
-int
-save_bmp24(const char_t * filename, const uint32_t * pixels, int32_t w, int32_t stride, int32_t h)
+NADZUNA_API int
+ndz_save_bmp24(const char * filename, const uint32_t * pixels, int32_t w, int32_t stride, int32_t h)
 {
 	int ret;
 	int ret_val = 0;

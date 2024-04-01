@@ -11,16 +11,17 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include "nadzuna.h"
+
 #include "common.h"
 #include "color.h"
-#include "bitmapimg.h"
 #include "pgmfile.h"
 #include "error.h"
 
-BitmapImage_t *
-load_pgm(const char * filename)
+NADZUNA_API ndz_image_t *
+ndz_load_pgm(const char * filename)
 {
-	BitmapImage_t * img = NULL;
+	ndz_image_t * img = NULL;
 	FILE * fp;
 	int32_t k;
 	int32_t err;
@@ -85,7 +86,7 @@ load_pgm(const char * filename)
 		goto ERR_EXIT;
 	}
 
-	img = malloc(sizeof(BitmapImage_t));
+	img = malloc(sizeof(ndz_image_t));
 	
 	img->width  = w;
 	img->height = h;
@@ -93,7 +94,6 @@ load_pgm(const char * filename)
 	img->stride = stride;
 	img->bpp    = 8;
 	img->fmt    = COLORFMT_Y8;
-	img->align  = 2;
 
 	img->pixels = malloc(stride * h);
 
@@ -128,8 +128,8 @@ ERR_EXIT:
 }
 
 
-int
-save_pgm(const char * filename, BitmapImage_t * img)
+NADZUNA_API int
+ndz_save_pgm(const char * filename, ndz_image_t * img)
 {
 	int ret = 0;
 	uint8_t * out_buf = NULL;
@@ -189,7 +189,7 @@ save_pgm(const char * filename, BitmapImage_t * img)
 
 			for (int j=0; j<width; j+=1) {
 				uint32_t c = slp[j];
-				yuv_color_t s = RGB_to_YUV(c);
+				yuv_color_t s = ndz_rgb_to_yuv(c);
 				out_buf[j] = s.y;
 			}
 

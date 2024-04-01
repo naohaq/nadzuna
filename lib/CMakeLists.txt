@@ -1,5 +1,6 @@
 
 set(library_sources
+  nadzuna.h
   bitmapimg.c
   bitmapimg.h
   color.c
@@ -23,7 +24,7 @@ set(library_sources
 add_library(nadzuna SHARED ${library_sources})
 
 # Set the symbol defined when compiled as a shared library.
-set_target_properties(nadzuna PROPERTIES DEFINE_SYMBOL NADZUNA_EXPORTS)
+set_target_properties(nadzuna PROPERTIES DEFINE_SYMBOL NADZUNA_BUILD)
 
 target_link_libraries(nadzuna PUBLIC PNG::PNG)
 

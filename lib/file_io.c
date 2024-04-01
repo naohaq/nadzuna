@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "nadzuna.h"
+
 #include "file_io.h"
 
 uint16_t

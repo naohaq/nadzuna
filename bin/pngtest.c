@@ -10,22 +10,20 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include "nadzuna.h"
+
 #include "common.h"
-#include "color.h"
-#include "bitmapimg.h"
-#include "pngfile.h"
-#include "tgafile.h"
 
 int
 main(int argc, char * argv[])
 {
-	BitmapImage_t * img;
+	ndz_image_t * img;
 
 	if (argc < 2) {
 		exit(1);
 	}
 
-	img = load_png(argv[1]);
+	img = ndz_load_png(argv[1]);
 	if (img == NULL) {
 		fprintf(stderr, "%s: failed to load image.\n", argv[1]);
 		exit(1);
@@ -33,7 +31,7 @@ main(int argc, char * argv[])
 	fprintf(stderr, "load_png(...) = %p\n", img);
 
 	fprintf(stderr, "Output result...\n");
-	save_tga("tmp/output.tga", img);
+	ndz_save_tga("tmp/output.tga", img);
 
 	return 0;
 }

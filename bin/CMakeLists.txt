@@ -9,4 +9,9 @@ target_link_libraries(bmptest
   PRIVATE nadzuna
   PUBLIC nadzuna_compiler_flags)
 
+add_executable(tgatest tgatest.c)
+target_link_libraries(tgatest
+  PRIVATE nadzuna
+  PUBLIC nadzuna_compiler_flags)
+
 # EOF

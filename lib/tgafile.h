@@ -12,8 +12,31 @@
 extern "C" {
 #endif
 
-extern BitmapImage_t * load_tga(const char * filename);
-extern int save_tga(const char * filename, BitmapImage_t * img);
+/* TGA pixel formats */
+#define TGA_TYPE_MAPPED       (1)
+#define TGA_TYPE_COLOR        (2)
+#define TGA_TYPE_GRAY         (3)
+#define TGA_TYPE_MAPPED_RLE   (9)
+#define TGA_TYPE_COLOR_RLE   (10)
+#define TGA_TYPE_GRAY_RLE    (11)
+
+struct ST_TGA_HEADER {
+	uint8_t id_len;
+	uint8_t cmap_type;
+	uint8_t img_type;
+	int16_t cmap_org;
+	int16_t cmap_len;
+	uint8_t cmap_size;
+	int16_t img_org_x;
+	int16_t img_org_y;
+	int16_t img_width;
+	int16_t img_height;
+	uint8_t img_bpp;
+	uint8_t img_desc;
+	uint8_t img_id[];
+};
+
+typedef struct ST_TGA_HEADER TGAHeader_t;
 
 #ifdef __cplusplus
 }

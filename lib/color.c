@@ -11,9 +11,10 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "nadzuna.h"
+
 #include "common.h"
 #include "color.h"
-#include "bitmapimg.h"
 #include "error.h"
 
 int32_t
@@ -36,8 +37,8 @@ GetBytePerPixel_of_Format(ColorFormat_t fmt)
 }
 
 
-yuv_color_t
-RGB_to_YUV(uint32_t rgb)
+NADZUNA_API yuv_color_t
+ndz_rgb_to_yuv(uint32_t rgb)
 {
 	const uint32_t r = (rgb & 0x00ff0000U) >> 16;
 	const uint32_t g = (rgb & 0x0000ff00U) >>  8;
@@ -63,8 +64,8 @@ RGB_to_YUV(uint32_t rgb)
 	return result;
 }
 
-uint32_t
-YUV_to_RGB(yuv_color_t s)
+NADZUNA_API uint32_t
+ndz_yuv_to_rgb(yuv_color_t s)
 {
 	const float32_t fy = (float32_t)s.y;
 	const float32_t fu = (float32_t)((int32_t)s.u - 128);
@@ -91,10 +92,10 @@ YUV_to_RGB(yuv_color_t s)
 }
 
 
-BitmapImage_t *
-convert_RGB888_to_Y8(BitmapImage_t * src_img)
+ndz_image_t *
+convert_RGB888_to_Y8(ndz_image_t * src_img)
 {
-	BitmapImage_t * dst_img = NULL;
+	ndz_image_t * dst_img = NULL;
 	int32_t k;
 	int32_t width;
 	int32_t height;
@@ -111,7 +112,7 @@ convert_RGB888_to_Y8(BitmapImage_t * src_img)
 	stride = (src_img->stride != 0) ? src_img->stride : width;
 	pixels = (uint32_t *)src_img->pixels;
 
-	dst_img = BitmapImage_Create(width, 0, height, 8, COLORFMT_Y8);
+	dst_img = ndz_image_create(width, 0, height, 8, COLORFMT_Y8);
 	if (dst_img == NULL) {
 		ndz_print_error(__func__, "Memory allocation failed...");
 		goto ERR_EXIT;
@@ -122,7 +123,7 @@ convert_RGB888_to_Y8(BitmapImage_t * src_img)
 		uint32_t * slp = &(pixels[k * stride]);
 		uint8_t  * dlp = &(((uint8_t *)dst_img->pixels)[k * width]);
 		for (j=0; j<width; j+=1) {
-			yuv_color_t c = RGB_to_YUV(slp[j]);
+			yuv_color_t c = ndz_rgb_to_yuv(slp[j]);
 			dlp[j] = c.y;
 		}
 	}
@@ -131,10 +132,10 @@ ERR_EXIT:
 	return dst_img;
 }
 
-BitmapImage_t *
-convert_Y8_to_RGB888(BitmapImage_t * src_img)
+ndz_image_t *
+convert_Y8_to_RGB888(ndz_image_t * src_img)
 {
-	BitmapImage_t * dst_img = NULL;
+	ndz_image_t * dst_img = NULL;
 	int32_t k;
 	int32_t width;
 	int32_t height;
@@ -151,7 +152,7 @@ convert_Y8_to_RGB888(BitmapImage_t * src_img)
 	stride = (src_img->stride != 0) ? src_img->stride : width;
 	pixels = (uint8_t *)src_img->pixels;
 
-	dst_img = BitmapImage_Create(width, 0, height, 32, COLORFMT_RGB888_32);
+	dst_img = ndz_image_create(width, 0, height, 32, COLORFMT_RGB888_32);
 	if (dst_img == NULL) {
 		ndz_print_error(__func__, "Memory allocation failed...");
 		goto ERR_EXIT;
@@ -166,7 +167,7 @@ convert_Y8_to_RGB888(BitmapImage_t * src_img)
 			s.y = slp[j];
 			s.u = 128;
 			s.v = 128;
-			dlp[j] = YUV_to_RGB(s);
+			dlp[j] = ndz_yuv_to_rgb(s);
 		}
 	}
 

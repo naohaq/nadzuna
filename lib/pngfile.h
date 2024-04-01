@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-extern BitmapImage_t * load_png(const char * filename);
+
 
 #ifdef __cplusplus
 }

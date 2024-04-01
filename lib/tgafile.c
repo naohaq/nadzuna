@@ -12,39 +12,14 @@
 #include <string.h>
 #include <errno.h>
 
+#include "nadzuna.h"
+
 #include "common.h"
 #include "color.h"
 #include "color_inline.h"
-#include "bitmapimg.h"
 #include "file_io.h"
 #include "tgafile.h"
 #include "error.h"
-
-/* TGA pixel formats */
-#define TGA_TYPE_MAPPED       (1)
-#define TGA_TYPE_COLOR        (2)
-#define TGA_TYPE_GRAY         (3)
-#define TGA_TYPE_MAPPED_RLE   (9)
-#define TGA_TYPE_COLOR_RLE   (10)
-#define TGA_TYPE_GRAY_RLE    (11)
-
-struct ST_TGA_HEADER {
-	uint8_t id_len;
-	uint8_t cmap_type;
-	uint8_t img_type;
-	int16_t cmap_org;
-	int16_t cmap_len;
-	uint8_t cmap_size;
-	int16_t img_org_x;
-	int16_t img_org_y;
-	int16_t img_width;
-	int16_t img_height;
-	uint8_t img_bpp;
-	uint8_t img_desc;
-	uint8_t img_id[];
-};
-
-typedef struct ST_TGA_HEADER TGAHeader_t;
 
 static int TGA_load_header(FILE * fp, TGAHeader_t * hdr);
 
@@ -251,7 +226,7 @@ ERR_EXIT:
 }
 
 
-static BitmapImage_t *
+static ndz_image_t *
 TGA_load_colormapped_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, int bpp, int vflip)
 {
 	int err = 0;
@@ -262,7 +237,7 @@ TGA_load_colormapped_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, in
 	assert(phdr != NULL);
 	assert(bpp == 8);
 
-	BitmapImage_t * img = BitmapImage_Create(w, 0, h, 32, COLORFMT_ARGB8888_32);
+	ndz_image_t * img = ndz_image_create(w, 0, h, 32, COLORFMT_ARGB8888_32);
 	if (img == NULL) {
 		err = 1;
 		goto ERR_EXIT;
@@ -312,7 +287,7 @@ ERR_EXIT:
 
 	if (err) {
 		if (img != NULL) {
-			BitmapImage_Free(img);
+			ndz_image_free(img);
 			img = NULL;
 		}
 	}
@@ -320,7 +295,7 @@ ERR_EXIT:
 }
 
 
-static BitmapImage_t *
+static ndz_image_t *
 TGA_load_fullcolor_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, int bpp, int vflip)
 {
 	int err = 0;
@@ -331,7 +306,7 @@ TGA_load_fullcolor_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, int 
 	assert(phdr != NULL);
 	assert(bpp == 16 || bpp == 24 || bpp == 32);
 
-	BitmapImage_t * img = BitmapImage_Create(w, 0, h, 32, COLORFMT_ARGB8888_32);
+	ndz_image_t * img = ndz_image_create(w, 0, h, 32, COLORFMT_ARGB8888_32);
 	if (img == NULL) {
 		err = 1;
 		goto ERR_EXIT;
@@ -402,7 +377,7 @@ ERR_EXIT:
 
 	if (err) {
 		if (img != NULL) {
-			BitmapImage_Free(img);
+			ndz_image_free(img);
 			img = NULL;
 		}
 	}
@@ -410,7 +385,7 @@ ERR_EXIT:
 }
 
 
-static BitmapImage_t *
+static ndz_image_t *
 TGA_load_grayscale_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, int bpp, int vflip)
 {
 	int err = 0;
@@ -419,7 +394,7 @@ TGA_load_grayscale_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, int 
 	assert(phdr != NULL);
 	assert(bpp == 8);
 
-	BitmapImage_t * img = BitmapImage_Create(w, 0, h, 8, COLORFMT_Y8);
+	ndz_image_t * img = ndz_image_create(w, 0, h, 8, COLORFMT_Y8);
 	if (img == NULL) {
 		err = 1;
 		goto ERR_EXIT;
@@ -438,7 +413,7 @@ TGA_load_grayscale_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, int 
 ERR_EXIT:
 	if (err) {
 		if (img != NULL) {
-			BitmapImage_Free(img);
+			ndz_image_free(img);
 			img = NULL;
 		}
 	}
@@ -446,7 +421,7 @@ ERR_EXIT:
 }
 
 static int
-TGA_store_fullcolor_image(FILE * fp, const TGAHeader_t * phdr, const BitmapImage_t * img)
+TGA_store_fullcolor_image(FILE * fp, const TGAHeader_t * phdr, const ndz_image_t * img)
 {
 	int err = 0;
 	int ret_val = 0;
@@ -512,7 +487,7 @@ ERR_EXIT:
 
 
 static int
-TGA_store_grayscale_image(FILE * fp, const TGAHeader_t * phdr, const BitmapImage_t * img)
+TGA_store_grayscale_image(FILE * fp, const TGAHeader_t * phdr, const ndz_image_t * img)
 {
 	int err = 0;
 	int ret_val = 0;
@@ -541,10 +516,10 @@ ERR_EXIT:
 	return ret_val;
 }
 
-BitmapImage_t *
-load_tga(const char * filename)
+NADZUNA_API ndz_image_t *
+ndz_load_tga(const char * filename)
 {
-	BitmapImage_t * img = NULL;
+	ndz_image_t * img = NULL;
 	int err = 0;
 	FILE * fp;
 
@@ -636,15 +611,15 @@ ERR_EXIT:
 	}
 	if (err) {
 		if (img != NULL) {
-			BitmapImage_Free(img);
+			ndz_image_free(img);
 			img = NULL;
 		}
 	}
 	return img;
 }
 
-int
-save_tga(const char * filename, BitmapImage_t * img)
+NADZUNA_API int
+ndz_save_tga(const char * filename, ndz_image_t * img)
 {
 	int err = 0;
 	int ret_val = 0;

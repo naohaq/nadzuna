@@ -12,8 +12,7 @@
 extern "C" {
 #endif
 
-BitmapImage_t * load_pgm(const char * filename);
-int save_pgm(const char * filename, BitmapImage_t * img);
+
 
 #ifdef __cplusplus
 }

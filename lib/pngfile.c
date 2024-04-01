@@ -14,18 +14,19 @@
 
 #include <png.h>
 
+#include "nadzuna.h"
+
 #include "common.h"
 #include "color.h"
-#include "bitmapimg.h"
 #include "file_io.h"
 #include "pngfile.h"
 #include "error.h"
 
 
-BitmapImage_t *
-load_png(const char * filename)
+NADZUNA_API ndz_image_t *
+ndz_load_png(const char * filename)
 {
-	BitmapImage_t * result = NULL;
+	ndz_image_t * result = NULL;
 	int err = 0;
 	png_image image;
 
@@ -53,7 +54,7 @@ load_png(const char * filename)
 	int bpp = 32;
 	int bytepp = (bpp + 7) >> 3;
 	int stride = PNG_IMAGE_ROW_STRIDE(image) / bytepp;
-	result = BitmapImage_Create(w, stride, h, bytepp, COLORFMT_ARGB8888_32);
+	result = ndz_image_create(w, stride, h, bytepp, COLORFMT_ARGB8888_32);
 	if (result == NULL) {
 		err = 1;
 		goto ERR_EXIT;
@@ -70,7 +71,7 @@ ERR_EXIT:
 
 	if (err) {
 		if (result != NULL) {
-			BitmapImage_Free(result);
+			ndz_image_free(result);
 			result = NULL;
 		}
 	}

@@ -11,15 +11,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "nadzuna.h"
+
 #include "common.h"
 #include "color.h"
 #include "bitmapimg.h"
 #include "error.h"
 
-BitmapImage_t *
-BitmapImage_Create(int32_t width, int32_t stride, int32_t height, int32_t bpp, ColorFormat_t fmt)
+NADZUNA_API ndz_image_t *
+ndz_image_create(int32_t width, int32_t stride, int32_t height, int32_t bpp, ColorFormat_t fmt)
 {
-	BitmapImage_t * img = NULL;
+	ndz_image_t * img = NULL;
 	int32_t bytepp = 0;
 
 	assert(width > 0);
@@ -41,7 +43,7 @@ BitmapImage_Create(int32_t width, int32_t stride, int32_t height, int32_t bpp, C
 		goto ERR_EXIT;
 	}
 
-	img = malloc(sizeof(BitmapImage_t));
+	img = malloc(sizeof(ndz_image_t));
 	if (img == NULL) {
 		ndz_print_error(__func__, "Failed to allocate memory...");
 		goto ERR_EXIT;
@@ -60,15 +62,14 @@ BitmapImage_Create(int32_t width, int32_t stride, int32_t height, int32_t bpp, C
 	img->stride = stride;
 	img->bpp    = bpp;
 	img->fmt    = fmt;
-	img->align  = 0;
 
 ERR_EXIT:
 	return img;
 }
 
 
-void
-BitmapImage_Free(BitmapImage_t * img)
+NADZUNA_API void
+ndz_image_free(ndz_image_t * img)
 {
 	assert(img != NULL);
 	assert(img->pixels != NULL);

@@ -12,6 +12,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "nadzuna.h"
+
 #include "common.h"
 #include "error.h"
 
