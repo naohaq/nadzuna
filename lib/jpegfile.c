@@ -43,7 +43,9 @@ _jpeg_error_exit(j_common_ptr jcp)
 static void
 _jpeg_emit_message(j_common_ptr jcp, int msg_level)
 {
+#if 0
 	ndz_jpeg_data_t * jd = (ndz_jpeg_data_t *)jcp->err;
+#endif
 
 	if (msg_level < 0) {
 		jcp->err->output_message(jcp);
@@ -125,11 +127,7 @@ ndz_load_jpeg(const char * filename)
 	}
 
 	int outbuf_height = jds.rec_outbuf_height;
-	int bytepp = jds.output_components;
-	int bpp = bytepp * 8;
-	fprintf(stderr, "%s: bit depth: %d\n", __func__, jds.data_precision);
-	fprintf(stderr, "%s: %dx%d, %dbpp\n", __func__, w, h, bpp);
-	fprintf(stderr, "%s: recommend: %d lines\n", __func__, outbuf_height);
+	int src_bytepp = jds.output_components;
 
 	int dst_bytepp = GetBytePerPixel_of_Format(fmt);
 	img = ndz_image_create(w, 0, h, dst_bytepp*8, fmt);
@@ -137,7 +135,7 @@ ndz_load_jpeg(const char * filename)
 		goto ERR_EXIT;
 	}
 
-	dec_buf = malloc(w * 16 * bytepp);
+	dec_buf = malloc(w * 16 * src_bytepp);
 	if (dec_buf == NULL) {
 		ndz_print_error(__func__, "Failed to allocate memory...");
 		goto ERR_EXIT;
@@ -145,7 +143,7 @@ ndz_load_jpeg(const char * filename)
 
 	uint8_t * lines[16];
 	for (int k=0; k < outbuf_height; k+=1) {
-		lines[k] = &(dec_buf[k * w * bytepp]);
+		lines[k] = &(dec_buf[k * w * src_bytepp]);
 	}
 
 	for (int y=0; y < h; y += outbuf_height) {
@@ -164,9 +162,9 @@ ndz_load_jpeg(const char * filename)
 				uint32_t * pixels = (uint32_t *)img->pixels;
 				uint32_t * dst_lp = &(pixels[(y+k)*w]);
 				for (int x=0; x<w; x+=1) {
-					uint8_t r = src_lp[x*bytepp + 0];
-					uint8_t g = src_lp[x*bytepp + 1];
-					uint8_t b = src_lp[x*bytepp + 2];
+					uint8_t r = src_lp[x*src_bytepp + 0];
+					uint8_t g = src_lp[x*src_bytepp + 1];
+					uint8_t b = src_lp[x*src_bytepp + 2];
 					dst_lp[x] = combine_ARGB(0xff,r,g,b);
 				}
 				break;
