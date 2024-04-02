@@ -49,12 +49,10 @@ ndz_load_png(const char * filename)
 		goto ERR_EXIT;
 	}
 
-	fprintf(stderr, "%s: %dx%d %dbpp\n", __func__, w, h, PNG_IMAGE_PIXEL_CHANNELS(image.format)*8);
-
-	int bpp = 32;
-	int bytepp = (bpp + 7) >> 3;
+	int bytepp = PNG_IMAGE_PIXEL_SIZE(image.format);
+	int bpp = bytepp * 8;
 	int stride = PNG_IMAGE_ROW_STRIDE(image) / bytepp;
-	result = ndz_image_create(w, stride, h, bytepp, COLORFMT_ARGB8888_32);
+	result = ndz_image_create(w, stride, h, bpp, COLORFMT_ARGB8888_32);
 	if (result == NULL) {
 		err = 1;
 		goto ERR_EXIT;

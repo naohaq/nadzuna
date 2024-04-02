@@ -28,6 +28,8 @@ main(int argc, char * argv[])
 	}
 	fprintf(stderr, "load_png(...) = %p\n", img);
 
+	fprintf(stderr, "%s: %dx%d, %dbpp\n", argv[1], img->width, img->height, img->bpp);
+
 	fprintf(stderr, "Output result...\n");
 	ndz_save_tga("tmp/output.tga", img);
 
