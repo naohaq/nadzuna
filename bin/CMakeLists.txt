@@ -19,4 +19,9 @@ target_link_libraries(pgmtest
   PRIVATE nadzuna
   PUBLIC nadzuna_compiler_flags)
 
+add_executable(jpegtest jpegtest.c)
+target_link_libraries(jpegtest
+  PRIVATE nadzuna
+  PUBLIC nadzuna_compiler_flags)
+
 # EOF

@@ -17,6 +17,7 @@ set(library_sources
   tgafile.h
   bmpfile.c
   bmpfile.h
+  jpegfile.c
 )
 
 if(WIN32)
@@ -31,6 +32,7 @@ set_target_properties(nadzuna PROPERTIES DEFINE_SYMBOL NADZUNA_BUILD)
 set_target_properties(nadzuna PROPERTIES C_VISIBILITY_PRESET hidden)
 
 target_link_libraries(nadzuna PUBLIC PNG::PNG)
+target_link_libraries(nadzuna PUBLIC JPEG::JPEG)
 
 if(MATH_LIBRARY)
   target_link_libraries(nadzuna PUBLIC m)

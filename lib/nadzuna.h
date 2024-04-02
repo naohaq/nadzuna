@@ -54,13 +54,13 @@ enum T_NDZ_COLOR_FORMAT {
 
 typedef enum T_NDZ_COLOR_FORMAT ndz_colorfmt_t;
 
-struct T_YUV_COLOR {
+struct T_NDZ_YUV_COLOR {
 	uint8_t y;
 	uint8_t u;
 	uint8_t v;
 };
 
-typedef struct T_YUV_COLOR ndz_yuv_t;
+typedef struct T_NDZ_YUV_COLOR ndz_yuv_t;
 
 struct T_NADZUNA_IMAGE {
 	int32_t width;
@@ -77,6 +77,8 @@ extern NADZUNA_API ndz_image_t * ndz_image_create(int32_t width, int32_t stride,
 extern NADZUNA_API void ndz_image_free(ndz_image_t * img);
 
 extern NADZUNA_API ndz_image_t * ndz_load_png(const char * filename);
+
+extern NADZUNA_API ndz_image_t * ndz_load_jpeg(const char * filename);
 
 extern NADZUNA_API ndz_image_t * ndz_load_tga(const char * filename);
 extern NADZUNA_API int ndz_save_tga(const char * filename, ndz_image_t * img);
