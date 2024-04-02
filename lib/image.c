@@ -18,7 +18,7 @@
 #include "error.h"
 
 NADZUNA_API ndz_image_t *
-ndz_image_create(int32_t width, int32_t stride, int32_t height, int32_t bpp, ColorFormat_t fmt)
+ndz_image_create(int32_t width, int32_t stride, int32_t height, int32_t bpp, ndz_colorfmt_t fmt)
 {
 	ndz_image_t * img = NULL;
 	int32_t bytepp = 0;

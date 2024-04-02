@@ -89,7 +89,7 @@ ndz_load_pgm(const char * filename)
 	}
 
 	int32_t stride = (w + 3) & 0x7ffffffc;
-	img = ndz_image_create(w, stride, h, 8, COLORFMT_Y8);
+	img = ndz_image_create(w, stride, h, 8, NDZ_COLORFMT_Y8);
 	if (img == NULL) {
 		goto ERR_EXIT;
 	}
@@ -137,10 +137,10 @@ ndz_save_pgm(const char * filename, ndz_image_t * img)
 	assert(filename != NULL);
 
 	switch (img->fmt) {
-	case COLORFMT_Y8:
+	case NDZ_COLORFMT_Y8:
 		break;
 
-	case COLORFMT_ARGB8888_32:
+	case NDZ_COLORFMT_ARGB8888_32:
 		break;
 
 	default:
@@ -164,7 +164,7 @@ ndz_save_pgm(const char * filename, ndz_image_t * img)
 	fprintf(out_fp, "%d %d\n", width, height);
 	fprintf(out_fp, "255\n");
 
-	if (img->fmt == COLORFMT_Y8) {
+	if (img->fmt == NDZ_COLORFMT_Y8) {
 		uint8_t * pixels = (uint8_t *)img->pixels;
 
 		for (int k=0; k<height; k+=1) {
@@ -172,7 +172,7 @@ ndz_save_pgm(const char * filename, ndz_image_t * img)
 			fwrite(out_ln, 1, width, out_fp);
 		}
 	}
-	else if (img->fmt == COLORFMT_ARGB8888_32) {
+	else if (img->fmt == NDZ_COLORFMT_ARGB8888_32) {
 		uint32_t * pixels = (uint32_t *)img->pixels;
 
 		out_buf = malloc(width);
@@ -187,7 +187,7 @@ ndz_save_pgm(const char * filename, ndz_image_t * img)
 
 			for (int j=0; j<width; j+=1) {
 				uint32_t c = slp[j];
-				yuv_color_t s = ndz_rgb2yuv(c);
+				ndz_yuv_t s = ndz_rgb2yuv(c);
 				out_buf[j] = s.y;
 			}
 

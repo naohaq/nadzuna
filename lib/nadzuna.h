@@ -40,18 +40,19 @@ extern "C" {
 
 
 enum T_NDZ_COLOR_FORMAT {
-	COLORFMT_ARGB8888_32 = 0,
-#define COLORFMT_RGB888_32 COLORFMT_ARGB8888_32
-	COLORFMT_BGRA8888_32  = 1,
-#define COLORFMT_BGR888_32 COLORFMT_BGRA8888_32
-	COLORFMT_RGB565_16   = 2,
-	COLORFMT_ARGB1555_16 = 3,
-	COLORFMT_YUV444_32   = 4,
-	COLORFMT_YUV422_16   = 5,
-	COLORFMT_Y8          = 6,
+	NDZ_COLORFMT_ARGB8888_32 = 0,
+#define NDZ_COLORFMT_RGB888_32 NDZ_COLORFMT_ARGB8888_32
+	NDZ_COLORFMT_BGRA8888_32  = 1,
+#define NDZ_COLORFMT_BGR888_32 NDZ_COLORFMT_BGRA8888_32
+	NDZ_COLORFMT_RGB565_16   = 2,
+	NDZ_COLORFMT_ARGB1555_16 = 3,
+	NDZ_COLORFMT_YUV444_32   = 4,
+	NDZ_COLORFMT_YUV422_16   = 5,
+	NDZ_COLORFMT_Y8          = 6,
+#define NDZ_COLORFMT_GRAYSCALE NDZ_COLORFMT_Y8
 };
 
-typedef enum T_NDZ_COLOR_FORMAT ColorFormat_t;
+typedef enum T_NDZ_COLOR_FORMAT ndz_colorfmt_t;
 
 struct T_YUV_COLOR {
 	uint8_t y;
@@ -59,20 +60,20 @@ struct T_YUV_COLOR {
 	uint8_t v;
 };
 
-typedef struct T_YUV_COLOR yuv_color_t;
+typedef struct T_YUV_COLOR ndz_yuv_t;
 
 struct T_NADZUNA_IMAGE {
 	int32_t width;
 	int32_t height;
 	int32_t stride;
 	int32_t bpp;
-	ColorFormat_t fmt;
+	ndz_colorfmt_t fmt;
 	void * pixels;
 };
 
 typedef struct T_NADZUNA_IMAGE ndz_image_t;
 
-extern NADZUNA_API ndz_image_t * ndz_image_create(int32_t width, int32_t stride, int32_t height, int32_t bpp, ColorFormat_t fmt);
+extern NADZUNA_API ndz_image_t * ndz_image_create(int32_t width, int32_t stride, int32_t height, int32_t bpp, ndz_colorfmt_t fmt);
 extern NADZUNA_API void ndz_image_free(ndz_image_t * img);
 
 extern NADZUNA_API ndz_image_t * ndz_load_png(const char * filename);
@@ -86,8 +87,8 @@ extern NADZUNA_API int ndz_save_bmp24(const char * filename, const uint32_t * pi
 extern NADZUNA_API ndz_image_t * ndz_load_pgm(const char * filename);
 extern NADZUNA_API int ndz_save_pgm(const char * filename, ndz_image_t * img);
 
-extern NADZUNA_API yuv_color_t ndz_rgb2yuv(uint32_t rgb);
-extern NADZUNA_API uint32_t ndz_yuv2rgb(yuv_color_t s);
+extern NADZUNA_API ndz_yuv_t ndz_rgb2yuv(uint32_t rgb);
+extern NADZUNA_API uint32_t ndz_yuv2rgb(ndz_yuv_t s);
 
 
 #ifdef __cplusplus

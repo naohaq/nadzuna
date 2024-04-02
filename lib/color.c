@@ -18,18 +18,18 @@
 #include "error.h"
 
 int32_t
-GetBytePerPixel_of_Format(ColorFormat_t fmt)
+GetBytePerPixel_of_Format(ndz_colorfmt_t fmt)
 {
 	int32_t byte_per_pixel;
 
 	switch (fmt) {
-	case COLORFMT_ARGB8888_32: byte_per_pixel = 4; break;
-	case COLORFMT_BGRA8888_32: byte_per_pixel = 4; break;
-	case COLORFMT_RGB565_16:   byte_per_pixel = 2; break;
-	case COLORFMT_ARGB1555_16: byte_per_pixel = 2; break;
-	case COLORFMT_YUV444_32:   byte_per_pixel = 4; break;
-	case COLORFMT_YUV422_16:   byte_per_pixel = 2; break;
-	case COLORFMT_Y8:          byte_per_pixel = 1; break;
+	case NDZ_COLORFMT_ARGB8888_32: byte_per_pixel = 4; break;
+	case NDZ_COLORFMT_BGRA8888_32: byte_per_pixel = 4; break;
+	case NDZ_COLORFMT_RGB565_16:   byte_per_pixel = 2; break;
+	case NDZ_COLORFMT_ARGB1555_16: byte_per_pixel = 2; break;
+	case NDZ_COLORFMT_YUV444_32:   byte_per_pixel = 4; break;
+	case NDZ_COLORFMT_YUV422_16:   byte_per_pixel = 2; break;
+	case NDZ_COLORFMT_Y8:          byte_per_pixel = 1; break;
 	default:                   byte_per_pixel = -1; /* error */
 	}
 
@@ -37,7 +37,7 @@ GetBytePerPixel_of_Format(ColorFormat_t fmt)
 }
 
 
-NADZUNA_API yuv_color_t
+NADZUNA_API ndz_yuv_t
 ndz_rgb2yuv(uint32_t rgb)
 {
 	const uint32_t r = (rgb & 0x00ff0000U) >> 16;
@@ -56,7 +56,7 @@ ndz_rgb2yuv(uint32_t rgb)
 	const int32_t u = (int32_t)floorf(fu);
 	const int32_t v = (int32_t)floorf(fv);
 
-	yuv_color_t result;
+	ndz_yuv_t result;
 	result.y = (uint8_t)y;
 	result.u = (uint8_t)(u+128);
 	result.v = (uint8_t)(v+128);
@@ -65,7 +65,7 @@ ndz_rgb2yuv(uint32_t rgb)
 }
 
 NADZUNA_API uint32_t
-ndz_yuv2rgb(yuv_color_t s)
+ndz_yuv2rgb(ndz_yuv_t s)
 {
 	const float32_t fy = (float32_t)s.y;
 	const float32_t fu = (float32_t)((int32_t)s.u - 128);
@@ -105,14 +105,14 @@ convert_RGB888_to_Y8(ndz_image_t * src_img)
 	assert(src_img != NULL);
 	assert(src_img->pixels != NULL);
 
-	assert(src_img->fmt == COLORFMT_RGB888_32);
+	assert(src_img->fmt == NDZ_COLORFMT_RGB888_32);
 
 	width  = src_img->width;
 	height = src_img->height;
 	stride = (src_img->stride != 0) ? src_img->stride : width;
 	pixels = (uint32_t *)src_img->pixels;
 
-	dst_img = ndz_image_create(width, 0, height, 8, COLORFMT_Y8);
+	dst_img = ndz_image_create(width, 0, height, 8, NDZ_COLORFMT_Y8);
 	if (dst_img == NULL) {
 		ndz_print_error(__func__, "Memory allocation failed...");
 		goto ERR_EXIT;
@@ -123,7 +123,7 @@ convert_RGB888_to_Y8(ndz_image_t * src_img)
 		uint32_t * slp = &(pixels[k * stride]);
 		uint8_t  * dlp = &(((uint8_t *)dst_img->pixels)[k * width]);
 		for (j=0; j<width; j+=1) {
-			yuv_color_t c = ndz_rgb2yuv(slp[j]);
+			ndz_yuv_t c = ndz_rgb2yuv(slp[j]);
 			dlp[j] = c.y;
 		}
 	}
@@ -145,14 +145,14 @@ convert_Y8_to_RGB888(ndz_image_t * src_img)
 	assert(src_img != NULL);
 	assert(src_img->pixels != NULL);
 
-	assert(src_img->fmt == COLORFMT_Y8);
+	assert(src_img->fmt == NDZ_COLORFMT_Y8);
 
 	width  = src_img->width;
 	height = src_img->height;
 	stride = (src_img->stride != 0) ? src_img->stride : width;
 	pixels = (uint8_t *)src_img->pixels;
 
-	dst_img = ndz_image_create(width, 0, height, 32, COLORFMT_RGB888_32);
+	dst_img = ndz_image_create(width, 0, height, 32, NDZ_COLORFMT_RGB888_32);
 	if (dst_img == NULL) {
 		ndz_print_error(__func__, "Memory allocation failed...");
 		goto ERR_EXIT;
@@ -163,7 +163,7 @@ convert_Y8_to_RGB888(ndz_image_t * src_img)
 		uint8_t  * slp = &(pixels[k * stride]);
 		uint32_t * dlp = &(((uint32_t *)dst_img->pixels)[k * width]);
 		for (j=0; j<width; j+=1) {
-			yuv_color_t s;
+			ndz_yuv_t s;
 			s.y = slp[j];
 			s.u = 128;
 			s.v = 128;

@@ -18,7 +18,7 @@
 
 #include "common.h"
 #include "color.h"
-#include "file_io.h"
+// #include "file_io.h"
 #include "pngfile.h"
 #include "error.h"
 
@@ -52,7 +52,7 @@ ndz_load_png(const char * filename)
 	int bytepp = PNG_IMAGE_PIXEL_SIZE(image.format);
 	int bpp = bytepp * 8;
 	int stride = PNG_IMAGE_ROW_STRIDE(image) / bytepp;
-	result = ndz_image_create(w, stride, h, bpp, COLORFMT_ARGB8888_32);
+	result = ndz_image_create(w, stride, h, bpp, NDZ_COLORFMT_ARGB8888_32);
 	if (result == NULL) {
 		err = 1;
 		goto ERR_EXIT;

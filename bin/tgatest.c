@@ -28,8 +28,8 @@ main(int argc, char * argv[])
 	}
 	fprintf(stderr, "load_tga(...) = %p\n", img);
 
-	if (img->fmt == COLORFMT_ARGB8888_32) {
-		ndz_image_t * img_y8 = ndz_image_create(img->width, 0, img->height, 8, COLORFMT_Y8);
+	if (img->fmt == NDZ_COLORFMT_ARGB8888_32) {
+		ndz_image_t * img_y8 = ndz_image_create(img->width, 0, img->height, 8, NDZ_COLORFMT_Y8);
 
 		if (img_y8 != NULL) {
 			uint32_t * src_px = (uint32_t *)img->pixels;
@@ -42,7 +42,7 @@ main(int argc, char * argv[])
 					uint32_t parity = ((j>>4)&0x01) ^ ((k>>4)&0x01);
 					uint32_t bg = parity*0x3f + 0x60;
 					uint32_t c  = src_px[k*w+j];
-					yuv_color_t s = ndz_rgb2yuv(c);
+					ndz_yuv_t s = ndz_rgb2yuv(c);
 					uint32_t a  = (c & 0xff000000) >> 24;
 					uint32_t y  = ((255 - a)*bg + a*s.y) / 255;
 					dst_px[k*w+j] = (uint8_t)y;
@@ -53,7 +53,7 @@ main(int argc, char * argv[])
 			ndz_save_tga("tmp/output.tga", img_y8);
 		}
 	}
-	else if (img->fmt == COLORFMT_Y8) {
+	else if (img->fmt == NDZ_COLORFMT_Y8) {
 		fprintf(stderr, "Output result...\n");
 		ndz_save_tga("tmp/output.tga", img);
 	}
