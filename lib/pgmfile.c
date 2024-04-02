@@ -187,7 +187,7 @@ ndz_save_pgm(const char * filename, ndz_image_t * img)
 
 			for (int j=0; j<width; j+=1) {
 				uint32_t c = slp[j];
-				yuv_color_t s = ndz_rgb_to_yuv(c);
+				yuv_color_t s = ndz_rgb2yuv(c);
 				out_buf[j] = s.y;
 			}
 

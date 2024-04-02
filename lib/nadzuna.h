@@ -86,8 +86,8 @@ extern NADZUNA_API int ndz_save_bmp24(const char * filename, const uint32_t * pi
 extern NADZUNA_API ndz_image_t * ndz_load_pgm(const char * filename);
 extern NADZUNA_API int ndz_save_pgm(const char * filename, ndz_image_t * img);
 
-extern NADZUNA_API yuv_color_t ndz_rgb_to_yuv(uint32_t rgb);
-extern NADZUNA_API uint32_t ndz_yuv_to_rgb(yuv_color_t s);
+extern NADZUNA_API yuv_color_t ndz_rgb2yuv(uint32_t rgb);
+extern NADZUNA_API uint32_t ndz_yuv2rgb(yuv_color_t s);
 
 
 #ifdef __cplusplus

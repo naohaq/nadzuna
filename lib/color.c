@@ -38,7 +38,7 @@ GetBytePerPixel_of_Format(ColorFormat_t fmt)
 
 
 NADZUNA_API yuv_color_t
-ndz_rgb_to_yuv(uint32_t rgb)
+ndz_rgb2yuv(uint32_t rgb)
 {
 	const uint32_t r = (rgb & 0x00ff0000U) >> 16;
 	const uint32_t g = (rgb & 0x0000ff00U) >>  8;
@@ -65,7 +65,7 @@ ndz_rgb_to_yuv(uint32_t rgb)
 }
 
 NADZUNA_API uint32_t
-ndz_yuv_to_rgb(yuv_color_t s)
+ndz_yuv2rgb(yuv_color_t s)
 {
 	const float32_t fy = (float32_t)s.y;
 	const float32_t fu = (float32_t)((int32_t)s.u - 128);
@@ -123,7 +123,7 @@ convert_RGB888_to_Y8(ndz_image_t * src_img)
 		uint32_t * slp = &(pixels[k * stride]);
 		uint8_t  * dlp = &(((uint8_t *)dst_img->pixels)[k * width]);
 		for (j=0; j<width; j+=1) {
-			yuv_color_t c = ndz_rgb_to_yuv(slp[j]);
+			yuv_color_t c = ndz_rgb2yuv(slp[j]);
 			dlp[j] = c.y;
 		}
 	}
@@ -167,7 +167,7 @@ convert_Y8_to_RGB888(ndz_image_t * src_img)
 			s.y = slp[j];
 			s.u = 128;
 			s.v = 128;
-			dlp[j] = ndz_yuv_to_rgb(s);
+			dlp[j] = ndz_yuv2rgb(s);
 		}
 	}
 
