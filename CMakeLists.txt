@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 project(Nadzuna
   VERSION 0.1
   LANGUAGES C)
+set(COPYRIGHT_YEAR "2024")
 
 find_library(MATH_LIBRARY m)
 
@@ -12,11 +13,16 @@ if(PNG_FOUND)
 endif(PNG_FOUND)
 
 find_package(JPEG)
-if (JPEG_FOUND)
+if(JPEG_FOUND)
   set(HAVE_LIBJPEG 1)
 endif(JPEG_FOUND)
 
 configure_file(config.h.in config.h)
+
+if(WIN32)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lib/win/nadzuna.rc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/windows/nadzuna.rc @ONLY)
+endif(WIN32)
 
 add_library(nadzuna_compiler_flags INTERFACE)
 target_compile_features(nadzuna_compiler_flags INTERFACE c_std_99)

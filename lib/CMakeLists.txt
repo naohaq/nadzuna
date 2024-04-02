@@ -19,6 +19,11 @@ set(library_sources
   bmpfile.h
 )
 
+if(WIN32)
+  list(APPEND library_sources
+    ${CMAKE_CURRENT_BINARY_DIR}/../windows/nadzuna.rc)
+endif(WIN32)
+
 add_library(nadzuna SHARED ${library_sources})
 
 # Set the symbol defined when compiled as a shared library.
