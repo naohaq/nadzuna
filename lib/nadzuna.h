@@ -89,7 +89,7 @@ extern NADZUNA_API ndz_image_t * ndz_load_tga(const char * filename);
 extern NADZUNA_API int ndz_save_tga(const char * filename, ndz_image_t * img);
 
 extern NADZUNA_API ndz_image_t * ndz_load_bmp(const char * filename);
-extern NADZUNA_API int ndz_save_bmp24(const char * filename, const uint32_t * pixels, int32_t w, int32_t stride, int32_t h);
+extern NADZUNA_API int ndz_save_bmp(const char * filename, ndz_image_t * img);
 
 extern NADZUNA_API ndz_image_t * ndz_load_pgm(const char * filename);
 extern NADZUNA_API int ndz_save_pgm(const char * filename, ndz_image_t * img);

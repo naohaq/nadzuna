@@ -44,7 +44,6 @@ struct T_BMPFILE {
 	int32_t direction;
 	int32_t bpp;
 	int32_t width;
-	int32_t stride;
 	int32_t bytewidth;
 	int32_t padded_bytewidth;
 	int32_t height;

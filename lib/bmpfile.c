@@ -416,15 +416,16 @@ ERR_EXIT:
 
 
 static int
-BMP_StorePixels(BMPFile_t * bmp, const uint32_t * pixels, FILE * fp)
+BMP_StorePixels(BMPFile_t * bmp, ndz_image_t * img, FILE * fp)
 {
 	int ret_val = 0;
 
 	uint8_t * line_buf = NULL;
-	int32_t stride = bmp->stride;
-	int32_t width  = bmp->width;
-	int32_t height = bmp->height;
-	int32_t bpp    = bmp->bpp;
+	uint32_t * pixels = (uint32_t *)img->pixels;
+	int32_t stride = img->stride;
+	int32_t width  = img->width;
+	int32_t height = img->height;
+	int32_t out_bpp = bmp->bpp;
 	int32_t padded_bytewidth = bmp->padded_bytewidth;
 	const int32_t y_scale = 1;
 
@@ -448,7 +449,7 @@ BMP_StorePixels(BMPFile_t * bmp, const uint32_t * pixels, FILE * fp)
 	}
 
 	for (int i=0; i<bmp->height; i+=y_scale) {
-		if (bpp == 24) {
+		if (out_bpp == 24) {
 			for (int j=0; j<width; j++) {
 				uint32_t c = lp[j];
 				uint32_t b = (c & 0x000000ffU);
@@ -460,7 +461,7 @@ BMP_StorePixels(BMPFile_t * bmp, const uint32_t * pixels, FILE * fp)
 			}
 
 		}
-		else if (bpp == 32) {
+		else if (out_bpp == 32) {
 			for (int j=0; j<width; j++) {
 				uint32_t c = lp[j];
 				uint32_t b = (c & 0x000000ffU);
@@ -495,15 +496,19 @@ ERR_EXIT:
 
 
 NADZUNA_API int
-ndz_save_bmp24(const char * filename, const uint32_t * pixels, int32_t w, int32_t stride, int32_t h)
+ndz_save_bmp(const char * filename, ndz_image_t * img)
 {
 	int ret;
 	int ret_val = 0;
 	BMPFile_t bmp;
 	FILE * fp = NULL;
 
+	assert(img != NULL);
 	assert(filename != NULL);
-	assert(pixels != NULL);
+
+	int32_t w = img->width;
+	int32_t stride = img->stride;
+	int32_t h = img->height;
 
 	if (stride == 0) {
 		stride = w;
@@ -515,7 +520,6 @@ ndz_save_bmp24(const char * filename, const uint32_t * pixels, int32_t w, int32_
 	}
 
 	bmp.width  = w;
-	bmp.stride = stride;
 	bmp.height = h;
 	bmp.bpp    = 24;
 	bmp.direction = -1;
@@ -547,7 +551,7 @@ ndz_save_bmp24(const char * filename, const uint32_t * pixels, int32_t w, int32_
 		goto ERR_EXIT;
 	}
 
-	ret = BMP_StorePixels(&bmp, pixels, fp);
+	ret = BMP_StorePixels(&bmp, img, fp);
 	if (ret < 0) {
 		ndz_print_error(__func__, "Failed to write pixels.");
 		ret_val = -1;
