@@ -17,23 +17,30 @@
 #include "color.h"
 #include "error.h"
 
+
 int32_t
-GetBytePerPixel_of_Format(ndz_colorfmt_t fmt)
+GetBytesPerPixel_of_Format(ndz_colorfmt_t fmt)
 {
-	int32_t byte_per_pixel;
+	int32_t bytes_per_pixel;
 
 	switch (fmt) {
-	case NDZ_COLORFMT_ARGB8888_32: byte_per_pixel = 4; break;
-	case NDZ_COLORFMT_BGRA8888_32: byte_per_pixel = 4; break;
-	case NDZ_COLORFMT_RGB565_16:   byte_per_pixel = 2; break;
-	case NDZ_COLORFMT_ARGB1555_16: byte_per_pixel = 2; break;
-	case NDZ_COLORFMT_YUV444_32:   byte_per_pixel = 4; break;
-	case NDZ_COLORFMT_YUV422_16:   byte_per_pixel = 2; break;
-	case NDZ_COLORFMT_Y8:          byte_per_pixel = 1; break;
-	default:                   byte_per_pixel = -1; /* error */
+	case NDZ_COLORFMT_ARGB8888:   bytes_per_pixel = 4; break;
+	case NDZ_COLORFMT_BGRA8888:   bytes_per_pixel = 4; break;
+	case NDZ_COLORFMT_RGB888:     bytes_per_pixel = 3; break;
+	case NDZ_COLORFMT_BGR888:     bytes_per_pixel = 3; break;
+	case NDZ_COLORFMT_RGB565:     bytes_per_pixel = 2; break;
+	case NDZ_COLORFMT_ARGB1555:   bytes_per_pixel = 2; break;
+	case NDZ_COLORFMT_Y8:         bytes_per_pixel = 1; break;
+	default:                      bytes_per_pixel = -1; /* error */
 	}
 
-	return byte_per_pixel;
+	return bytes_per_pixel;
+}
+
+NADZUNA_API int
+ndz_bytes_per_pixel(ndz_colorfmt_t fmt)
+{
+	return GetBytesPerPixel_of_Format(fmt);
 }
 
 
@@ -93,7 +100,7 @@ ndz_yuv2rgb(ndz_yuv_t s)
 
 
 ndz_image_t *
-convert_RGB888_to_Y8(ndz_image_t * src_img)
+convert_RGB_to_Y8(ndz_image_t * src_img)
 {
 	ndz_image_t * dst_img = NULL;
 	int32_t k;
@@ -105,7 +112,7 @@ convert_RGB888_to_Y8(ndz_image_t * src_img)
 	assert(src_img != NULL);
 	assert(src_img->pixels != NULL);
 
-	assert(src_img->fmt == NDZ_COLORFMT_RGB888_32);
+	assert(src_img->fmt == NDZ_COLORFMT_ARGB8888);
 
 	width  = src_img->width;
 	height = src_img->height;
@@ -133,7 +140,7 @@ ERR_EXIT:
 }
 
 ndz_image_t *
-convert_Y8_to_RGB888(ndz_image_t * src_img)
+convert_Y8_to_RGB(ndz_image_t * src_img)
 {
 	ndz_image_t * dst_img = NULL;
 	int32_t k;
@@ -152,7 +159,7 @@ convert_Y8_to_RGB888(ndz_image_t * src_img)
 	stride = (src_img->stride != 0) ? src_img->stride : width;
 	pixels = (uint8_t *)src_img->pixels;
 
-	dst_img = ndz_image_create(width, 0, height, 32, NDZ_COLORFMT_RGB888_32);
+	dst_img = ndz_image_create(width, 0, height, 32, NDZ_COLORFMT_ARGB8888);
 	if (dst_img == NULL) {
 		ndz_print_error(__func__, "Memory allocation failed...");
 		goto ERR_EXIT;

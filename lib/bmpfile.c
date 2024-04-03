@@ -283,7 +283,7 @@ ndz_load_bmp(const char * filename)
 		goto ERR_EXIT;
 	}
 
-	img = ndz_image_create(bmp.width, 0, bmp.height, 32, NDZ_COLORFMT_ARGB8888_32);
+	img = ndz_image_create(bmp.width, 0, bmp.height, 32, NDZ_COLORFMT_ARGB8888);
 	if (img == NULL) {
 		err = 1;
 		goto ERR_EXIT;

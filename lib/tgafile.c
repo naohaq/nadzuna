@@ -237,7 +237,7 @@ TGA_load_colormapped_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, in
 	assert(phdr != NULL);
 	assert(bpp == 8);
 
-	ndz_image_t * img = ndz_image_create(w, 0, h, 32, NDZ_COLORFMT_ARGB8888_32);
+	ndz_image_t * img = ndz_image_create(w, 0, h, 32, NDZ_COLORFMT_ARGB8888);
 	if (img == NULL) {
 		err = 1;
 		goto ERR_EXIT;
@@ -306,7 +306,7 @@ TGA_load_fullcolor_image(FILE * fp, const TGAHeader_t * phdr, int w, int h, int 
 	assert(phdr != NULL);
 	assert(bpp == 16 || bpp == 24 || bpp == 32);
 
-	ndz_image_t * img = ndz_image_create(w, 0, h, 32, NDZ_COLORFMT_ARGB8888_32);
+	ndz_image_t * img = ndz_image_create(w, 0, h, 32, NDZ_COLORFMT_ARGB8888);
 	if (img == NULL) {
 		err = 1;
 		goto ERR_EXIT;
@@ -448,7 +448,7 @@ TGA_store_fullcolor_image(FILE * fp, const TGAHeader_t * phdr, const ndz_image_t
 		int32_t ret;
 
 		switch (img->fmt) {
-		case NDZ_COLORFMT_ARGB8888_32: {
+		case NDZ_COLORFMT_ARGB8888: {
 			uint32_t * slp = &(((uint32_t *)img->pixels)[yy * img->stride]);
 			for (int k=0; k<w; k+=1) {
 				ndz_write_U32_l(&(pxbuf[k*4]), slp[k]);
@@ -456,7 +456,7 @@ TGA_store_fullcolor_image(FILE * fp, const TGAHeader_t * phdr, const ndz_image_t
 			break;
 		}
 
-		case NDZ_COLORFMT_ARGB1555_16: {
+		case NDZ_COLORFMT_ARGB1555: {
 			uint16_t * slp = &(((uint16_t *)img->pixels)[yy * img->stride]);
 			for (int k=0; k<w; k+=1) {
 				ndz_write_U16_l(&(pxbuf[k*2]), slp[k]);
@@ -644,13 +644,13 @@ ndz_save_tga(const char * filename, ndz_image_t * img)
 	hdr.img_height = img->height;
 
 	switch (img->fmt) {
-	case NDZ_COLORFMT_ARGB8888_32:
+	case NDZ_COLORFMT_ARGB8888:
 		hdr.img_type = TGA_TYPE_COLOR;
 		hdr.img_bpp  = 32;
 		hdr.img_desc = 0x08;
 		break;
 
-	case NDZ_COLORFMT_ARGB1555_16:
+	case NDZ_COLORFMT_ARGB1555:
 		hdr.img_type = TGA_TYPE_COLOR;
 		hdr.img_bpp  = 16;
 		hdr.img_desc = 0x01;
@@ -682,8 +682,8 @@ ndz_save_tga(const char * filename, ndz_image_t * img)
 	}
 
 	switch (img->fmt) {
-	case NDZ_COLORFMT_ARGB8888_32:
-	case NDZ_COLORFMT_ARGB1555_16:
+	case NDZ_COLORFMT_ARGB8888:
+	case NDZ_COLORFMT_ARGB1555:
 		if (TGA_store_fullcolor_image(fp, &hdr, img) < 0) {
 			err = 1;
 			goto ERR_EXIT;

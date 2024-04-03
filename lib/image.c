@@ -36,7 +36,7 @@ ndz_image_create(int32_t width, int32_t stride, int32_t height, int32_t bpp, ndz
 		goto ERR_EXIT;
 	}
 
-	bytepp = GetBytePerPixel_of_Format(fmt);
+	bytepp = GetBytesPerPixel_of_Format(fmt);
 	if (bytepp < 0) {
 		ndz_print_error(__func__, "Unknown color format: %d", fmt);
 		goto ERR_EXIT;

@@ -28,7 +28,7 @@ main(int argc, char * argv[])
 	}
 	fprintf(stderr, "load_tga(...) = %p\n", img);
 
-	if (img->fmt == NDZ_COLORFMT_ARGB8888_32) {
+	if (img->fmt == NDZ_COLORFMT_ARGB8888) {
 		ndz_image_t * img_y8 = ndz_image_create(img->width, 0, img->height, 8, NDZ_COLORFMT_Y8);
 
 		if (img_y8 != NULL) {

@@ -83,7 +83,6 @@ ndz_load_jpeg(const char * filename)
 
 	jds.err = _jpeg_data_init(&jdata);
 	if (setjmp(jdata.setjmp_buffer)) {
-		ndz_print_error(__func__, "hoge!");
 		goto ERR_EXIT;
 	}
 	jpeg_create_decompress(&jds);
@@ -114,22 +113,22 @@ ndz_load_jpeg(const char * filename)
 		goto ERR_EXIT;
 	}
 
-	ndz_colorfmt_t fmt = NDZ_COLORFMT_ARGB8888_32;
+	ndz_colorfmt_t fmt = NDZ_COLORFMT_ARGB8888;
 	if (jds.out_color_space == JCS_RGB) {
-		fmt = NDZ_COLORFMT_ARGB8888_32;
+		fmt = NDZ_COLORFMT_ARGB8888;
 	}
 	else if (jds.out_color_space == JCS_GRAYSCALE) {
 		fmt = NDZ_COLORFMT_Y8;
 	}
 	else {
-		ndz_print_error(__func__, "Unsupported color space.");
+		ndz_print_error(__func__, "Unsupported color space: %d", jds.out_color_space);
 		goto ERR_EXIT;
 	}
 
 	int outbuf_height = jds.rec_outbuf_height;
 	int src_bytepp = jds.output_components;
 
-	int dst_bytepp = GetBytePerPixel_of_Format(fmt);
+	int dst_bytepp = GetBytesPerPixel_of_Format(fmt);
 	img = ndz_image_create(w, 0, h, dst_bytepp*8, fmt);
 	if (img == NULL) {
 		goto ERR_EXIT;

@@ -140,7 +140,7 @@ ndz_save_pgm(const char * filename, ndz_image_t * img)
 	case NDZ_COLORFMT_Y8:
 		break;
 
-	case NDZ_COLORFMT_ARGB8888_32:
+	case NDZ_COLORFMT_ARGB8888:
 		break;
 
 	default:
@@ -172,7 +172,7 @@ ndz_save_pgm(const char * filename, ndz_image_t * img)
 			fwrite(out_ln, 1, width, out_fp);
 		}
 	}
-	else if (img->fmt == NDZ_COLORFMT_ARGB8888_32) {
+	else if (img->fmt == NDZ_COLORFMT_ARGB8888) {
 		uint32_t * pixels = (uint32_t *)img->pixels;
 
 		out_buf = malloc(width);
