@@ -25,9 +25,7 @@ GetBytesPerPixel_of_Format(ndz_colorfmt_t fmt)
 
 	switch (fmt) {
 	case NDZ_COLORFMT_ARGB8888:   bytes_per_pixel = 4; break;
-	case NDZ_COLORFMT_BGRA8888:   bytes_per_pixel = 4; break;
 	case NDZ_COLORFMT_RGB888:     bytes_per_pixel = 3; break;
-	case NDZ_COLORFMT_BGR888:     bytes_per_pixel = 3; break;
 	case NDZ_COLORFMT_RGB565:     bytes_per_pixel = 2; break;
 	case NDZ_COLORFMT_ARGB1555:   bytes_per_pixel = 2; break;
 	case NDZ_COLORFMT_Y8:         bytes_per_pixel = 1; break;
