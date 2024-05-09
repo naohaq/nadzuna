@@ -49,7 +49,7 @@ static int
 TGA_load_header(FILE * fp, TGAHeader_t * phdr)
 {
 	int32_t ret;
-	int ret_val = 0;
+	int rc = 0;
 	int err = 0;
 
 	assert(fp != NULL);
@@ -93,9 +93,9 @@ TGA_load_header(FILE * fp, TGAHeader_t * phdr)
 
 ERR_EXIT:
 	if (err) {
-		ret_val = -1;
+		rc = -1;
 	}
-	return ret_val;
+	return rc;
 }
 
 
@@ -103,7 +103,7 @@ static int
 TGA_store_header(FILE * fp, TGAHeader_t * phdr)
 {
 	int32_t ret;
-	int ret_val = 0;
+	int rc = 0;
 	int err = 0;
 
 	assert(fp != NULL);
@@ -147,9 +147,9 @@ TGA_store_header(FILE * fp, TGAHeader_t * phdr)
 
 ERR_EXIT:
 	if (err) {
-		ret_val = -1;
+		rc = -1;
 	}
-	return ret_val;
+	return rc;
 }
 
 static int
@@ -424,7 +424,7 @@ static int
 TGA_store_fullcolor_image(FILE * fp, const TGAHeader_t * phdr, const ndz_image_t * img)
 {
 	int err = 0;
-	int ret_val = 0;
+	int rc = 0;
 	uint8_t * pxbuf = NULL;
 
 	assert(fp != NULL);
@@ -480,9 +480,9 @@ ERR_EXIT:
 	}
 
 	if (err) {
-		ret_val = -1;
+		rc = -1;
 	}
-	return ret_val;
+	return rc;
 }
 
 
@@ -490,7 +490,7 @@ static int
 TGA_store_grayscale_image(FILE * fp, const TGAHeader_t * phdr, const ndz_image_t * img)
 {
 	int err = 0;
-	int ret_val = 0;
+	int rc = 0;
 
 	assert(fp != NULL);
 	assert(phdr != NULL);
@@ -511,9 +511,9 @@ TGA_store_grayscale_image(FILE * fp, const TGAHeader_t * phdr, const ndz_image_t
 
 ERR_EXIT:
 	if (err) {
-		ret_val = -1;
+		rc = -1;
 	}
-	return ret_val;
+	return rc;
 }
 
 NADZUNA_API ndz_image_t *
@@ -622,7 +622,7 @@ NADZUNA_API int
 ndz_save_tga(const char * filename, ndz_image_t * img)
 {
 	int err = 0;
-	int ret_val = 0;
+	int rc = 0;
 	FILE * fp = NULL;
 
 	assert(filename != NULL);
@@ -708,9 +708,9 @@ ERR_EXIT:
 		fclose(fp);
 	}
 	if (err) {
-		ret_val = -1;
+		rc = -1;
 	}
-	return ret_val;
+	return rc;
 }
 
 

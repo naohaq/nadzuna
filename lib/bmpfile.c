@@ -23,12 +23,12 @@
 #define FREAD_CHECK_ERROR(x) do {						\
 		if ((x) == 0) {									\
 			ndz_print_error(__func__, "Unexpected EOF"); \
-			ret_val = -1;								\
+			rc = -1;								\
 			goto ERR_EXIT;								\
 		}												\
 		else if ((x) == -1) {							\
 			ndz_print_strerror(__func__, "fread");		\
-			ret_val = -1;								\
+			rc = -1;								\
 			goto ERR_EXIT;								\
 		}												\
 	} while(0)
@@ -36,7 +36,7 @@
 #define FWRITE_CHECK_ERROR(x) do {					\
 		if ((x) < 0) {								\
 			ndz_print_strerror(__func__, "fwrite");	\
-			ret_val = -1;							\
+			rc = -1;							\
 			goto ERR_EXIT;							\
 		}											\
 	} while (0)										\
@@ -46,14 +46,14 @@ static int
 BMP_LoadFileHeader(BMPFileHeader_t * hdr, FILE * fp)
 {
 	int32_t ret;
-	int ret_val = 0;
+	int rc = 0;
 
 	ret = ndz_fread_U8str(fp, hdr->bfType, 2);
 	FREAD_CHECK_ERROR(ret);
 
 	if (hdr->bfType[0] != 'B' || hdr->bfType[1] != 'M') {
 		ndz_print_error(__func__, "Incorrect format.");
-		ret_val = -1;
+		rc = -1;
 	}
 	else {
 		ret = ndz_fread_U32_l(fp, &(hdr->bfSize));
@@ -70,7 +70,7 @@ BMP_LoadFileHeader(BMPFileHeader_t * hdr, FILE * fp)
 	}
 
 ERR_EXIT:
-	return ret_val;
+	return rc;
 }
 
 
@@ -78,7 +78,7 @@ static int
 BMP_LoadInfoHeader(BMPInfoHeader_t * hdr, FILE * fp)
 {
 	int32_t ret;
-	int ret_val = 0;
+	int rc = 0;
 
 	ret = ndz_fread_U32_l(fp, &(hdr->biSize));
 	FREAD_CHECK_ERROR(ret);
@@ -88,7 +88,7 @@ BMP_LoadInfoHeader(BMPInfoHeader_t * hdr, FILE * fp)
 			(__func__,
 			 "Unsupported format: the size of the header is not 40: %d",
 			 hdr->biSize);
-		ret_val = -1;
+		rc = -1;
 	}
 	else {
 		ret = ndz_fread_I32_l(fp, &(hdr->biWidth));
@@ -123,26 +123,26 @@ BMP_LoadInfoHeader(BMPInfoHeader_t * hdr, FILE * fp)
 	}
 
 ERR_EXIT:
-	return ret_val;
+	return rc;
 }
 
 static int
 BMP_LoadHeader(BMPFile_t * bmp, FILE * fp)
 {
 	int ret;
-	int ret_val = 0;
+	int rc = 0;
 	
 	ret = BMP_LoadFileHeader(&(bmp->fileHdr), fp);
 	if (ret < 0) {
 		ndz_print_error(__func__, "Can't load BMPFileHeader.");
-		ret_val = -1;
+		rc = -1;
 		goto ERR_EXIT;
 	}
 
 	ret = BMP_LoadInfoHeader(&(bmp->infoHdr), fp);
 	if (ret < 0) {
 		ndz_print_error(__func__, "Can't load BMPInfoHeader.");
-		ret_val = -1;
+		rc = -1;
 		goto ERR_EXIT;
 	}
 
@@ -153,7 +153,7 @@ BMP_LoadHeader(BMPFile_t * bmp, FILE * fp)
 			ret = fseek(fp, skiplen, SEEK_CUR);
 			if (ret < 0) {
 				ndz_print_strerror(__func__, "fseek");
-				ret_val = -1;
+				rc = -1;
 				goto ERR_EXIT;
 			}
 		}
@@ -173,14 +173,14 @@ BMP_LoadHeader(BMPFile_t * bmp, FILE * fp)
 	bmp->height    = (-1) * bmp->infoHdr.biHeight * bmp->direction;
 
 ERR_EXIT:
-	return ret_val;
+	return rc;
 }
 
 static int
 BMP_LoadPixels(BMPFile_t * bmp, uint32_t * pixels, FILE * fp)
 {
 	int err = 0;
-	int ret_val = 0;
+	int rc = 0;
 	int ret;
 
 	uint8_t * line_buf = NULL;
@@ -251,10 +251,10 @@ ERR_EXIT:
 		free(line_buf);
 	}
 	if (err) {
-		ret_val = -1;
+		rc = -1;
 	}
 
-	return ret_val;
+	return rc;
 }
 
 
@@ -349,7 +349,7 @@ static int
 BMP_StoreFileHeader(BMPFileHeader_t * hdr, FILE * fp)
 {
 	int32_t ret;
-	int ret_val = 0;
+	int rc = 0;
 
 	ret = ndz_fwrite_U8str(fp, hdr->bfType, 2);
 	FWRITE_CHECK_ERROR(ret);
@@ -367,7 +367,7 @@ BMP_StoreFileHeader(BMPFileHeader_t * hdr, FILE * fp)
 	FWRITE_CHECK_ERROR(ret);
 
 ERR_EXIT:
-	return ret_val;
+	return rc;
 }
 
 
@@ -375,7 +375,7 @@ static int
 BMP_StoreInfoHeader(BMPInfoHeader_t * hdr, FILE * fp)
 {
 	int32_t ret;
-	int ret_val = 0;
+	int rc = 0;
 
 	ret = ndz_fwrite_U32_l(fp, hdr->biSize);
 	FWRITE_CHECK_ERROR(ret);
@@ -411,14 +411,14 @@ BMP_StoreInfoHeader(BMPInfoHeader_t * hdr, FILE * fp)
 	FWRITE_CHECK_ERROR(ret);
 
 ERR_EXIT:
-	return ret_val;
+	return rc;
 }
 
 
 static int
 BMP_StorePixels(BMPFile_t * bmp, ndz_image_t * img, FILE * fp)
 {
-	int ret_val = 0;
+	int rc = 0;
 
 	uint8_t * line_buf = NULL;
 	uint32_t * pixels = (uint32_t *)img->pixels;
@@ -432,7 +432,7 @@ BMP_StorePixels(BMPFile_t * bmp, ndz_image_t * img, FILE * fp)
 	line_buf = malloc(padded_bytewidth);
 	if (line_buf == NULL) {
 		ndz_print_error(__func__, "Memory allocation failed.");
-		ret_val = -1;
+		rc = -1;
 		goto ERR_EXIT;
 	}
 
@@ -479,7 +479,7 @@ BMP_StorePixels(BMPFile_t * bmp, ndz_image_t * img, FILE * fp)
 			size_t ret = fwrite(line_buf, 1, padded_bytewidth, fp);
 			if (ret < padded_bytewidth) {
 				ndz_print_strerror(__func__, "fwrite");
-				ret_val = -1;
+				rc = -1;
 				goto ERR_EXIT;
 			}
 		}
@@ -491,7 +491,7 @@ ERR_EXIT:
 	if (line_buf != NULL) {
 		free(line_buf);
 	}
-	return ret_val;
+	return rc;
 }
 
 
@@ -499,7 +499,7 @@ NADZUNA_API int
 ndz_save_bmp(const char * filename, ndz_image_t * img)
 {
 	int ret;
-	int ret_val = 0;
+	int rc = 0;
 	BMPFile_t bmp;
 	FILE * fp = NULL;
 
@@ -515,7 +515,7 @@ ndz_save_bmp(const char * filename, ndz_image_t * img)
 	}
 	else if (stride < w) {
 		ndz_print_error(__func__, "The stride must be greater than or equal to the width: %d < %d", stride, w);
-		ret_val = -1;
+		rc = -1;
 		goto ERR_EXIT;
 	}
 
@@ -533,35 +533,35 @@ ndz_save_bmp(const char * filename, ndz_image_t * img)
 	fp = fopen(filename, "wb");
 	if (fp == NULL) {
 		ndz_print_strerror(__func__, "fopen");
-		ret_val = -1;
+		rc = -1;
 		goto ERR_EXIT;
 	}
 
 	ret = BMP_StoreFileHeader(&(bmp.fileHdr), fp);
 	if (ret < 0) {
 		ndz_print_error(__func__, "Failed to write file header.");
-		ret_val = -1;
+		rc = -1;
 		goto ERR_EXIT;
 	}
 
 	ret = BMP_StoreInfoHeader(&(bmp.infoHdr), fp);
 	if (ret < 0) {
 		ndz_print_error(__func__, "Failed to write info header.");
-		ret_val = -1;
+		rc = -1;
 		goto ERR_EXIT;
 	}
 
 	ret = BMP_StorePixels(&bmp, img, fp);
 	if (ret < 0) {
 		ndz_print_error(__func__, "Failed to write pixels.");
-		ret_val = -1;
+		rc = -1;
 	}
 
 ERR_EXIT:
 	if (fp != NULL) {
 		fclose(fp);
 	}
-	return ret_val;
+	return rc;
 }
 
 

@@ -206,340 +206,340 @@ int32_t
 ndz_fread_U8str(FILE * fp, uint8_t * ptr, int32_t n)
 {
 	int32_t ret;
-	int32_t ret_val = 1;
+	int32_t rc = 1;
 
 	ret = fread(ptr, 1, n, fp);
 	if (ret < n) {
 		if (feof(fp)) {
-			ret_val = 0; /* EOF */
+			rc = 0; /* EOF */
 		}
 		else {
-			ret_val = -1; /* error */
+			rc = -1; /* error */
 		}
 	}
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fread_U16_l(FILE * fp, uint16_t * result)
 {
 	int32_t ret;
-	int32_t ret_val = 1;
+	int32_t rc = 1;
 	uint8_t buf[2];
 
 	ret = fread(buf, 1, 2, fp);
 	if (ret < 2) {
 		if (feof(fp)) {
-			ret_val = 0; /* EOF */
+			rc = 0; /* EOF */
 		}
 		else {
-			ret_val = -1; /* error */
+			rc = -1; /* error */
 		}
 	}
 	else {
 		*result = ndz_read_U16_l(buf);
 	}
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fread_U16_b(FILE * fp, uint16_t * result)
 {
 	int32_t ret;
-	int32_t ret_val = 1;
+	int32_t rc = 1;
 	uint8_t buf[2];
 
 	ret = fread(buf, 1, 2, fp);
 	if (ret < 2) {
 		if (feof(fp)) {
-			ret_val = 0; /* EOF */
+			rc = 0; /* EOF */
 		}
 		else {
-			ret_val = -1; /* error */
+			rc = -1; /* error */
 		}
 	}
 	else {
 		*result = ndz_read_U16_b(buf);
 	}
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fread_I16_l(FILE * fp, int16_t * result)
 {
 	int32_t ret;
-	int32_t ret_val = 1;
+	int32_t rc = 1;
 	uint8_t buf[2];
 
 	ret = fread(buf, 1, 2, fp);
 	if (ret < 1) {
 		if (feof(fp)) {
-			ret_val = 0; /* EOF */
+			rc = 0; /* EOF */
 		}
 		else {
-			ret_val = -1; /* error */
+			rc = -1; /* error */
 		}
 	}
 	else {
 		*result = ndz_read_I16_l(buf);
 	}
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fread_I16_b(FILE * fp, int16_t * result)
 {
 	int32_t ret;
-	int32_t ret_val = 1;
+	int32_t rc = 1;
 	uint8_t buf[2];
 
 	ret = fread(buf, 1, 2, fp);
 	if (ret < 1) {
 		if (feof(fp)) {
-			ret_val = 0; /* EOF */
+			rc = 0; /* EOF */
 		}
 		else {
-			ret_val = -1; /* error */
+			rc = -1; /* error */
 		}
 	}
 	else {
 		*result = ndz_read_I16_b(buf);
 	}
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fread_U32_l(FILE * fp, uint32_t * result)
 {
 	int32_t ret;
-	int32_t ret_val = 1;
+	int32_t rc = 1;
 	uint8_t buf[4];
 
 	ret = fread(buf, 1, 4, fp);
 	if (ret < 4) {
 		if (feof(fp)) {
-			ret_val = 0; /* EOF */
+			rc = 0; /* EOF */
 		}
 		else {
-			ret_val = -1; /* error */
+			rc = -1; /* error */
 		}
 	}
 	else {
 		*result = ndz_read_U32_l(buf);
 	}
 
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fread_U32_b(FILE * fp, uint32_t * result)
 {
 	int32_t ret;
-	int32_t ret_val = 1;
+	int32_t rc = 1;
 	uint8_t buf[4];
 
 	ret = fread(buf, 1, 4, fp);
 	if (ret < 4) {
 		if (feof(fp)) {
-			ret_val = 0; /* EOF */
+			rc = 0; /* EOF */
 		}
 		else {
-			ret_val = -1; /* error */
+			rc = -1; /* error */
 		}
 	}
 	else {
 		*result = ndz_read_U32_b(buf);
 	}
 
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fread_I32_l(FILE * fp, int32_t * result)
 {
 	int32_t ret;
-	int32_t ret_val = 1;
+	int32_t rc = 1;
 	uint8_t buf[4];
 
 	ret = fread(buf, 1, 4, fp);
 	if (ret < 4) {
 		if (feof(fp)) {
-			ret_val = 0; /* EOF */
+			rc = 0; /* EOF */
 		}
 		else {
-			ret_val = -1; /* error */
+			rc = -1; /* error */
 		}
 	}
 	else {
 		*result = ndz_read_I32_l(buf);
 	}
 
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fread_I32_b(FILE * fp, int32_t * result)
 {
 	int32_t ret;
-	int32_t ret_val = 1;
+	int32_t rc = 1;
 	uint8_t buf[4];
 
 	ret = fread(buf, 1, 4, fp);
 	if (ret < 4) {
 		if (feof(fp)) {
-			ret_val = 0; /* EOF */
+			rc = 0; /* EOF */
 		}
 		else {
-			ret_val = -1; /* error */
+			rc = -1; /* error */
 		}
 	}
 	else {
 		*result = ndz_read_I32_b(buf);
 	}
 
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fwrite_U8str(FILE * fp, const uint8_t * ptr, int32_t n)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int32_t rc = 0;
 
 	ret = fwrite(ptr, 1, n, fp);
 	if (ret < n) {
-		ret_val = -1;
+		rc = -1;
 	}
 
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fwrite_U16_l(FILE * fp, uint16_t val)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int32_t rc = 0;
 	uint8_t buf[2];
 
 	ndz_write_U16_l(buf, val);
 	ret = fwrite(buf, 1, 2, fp);
 	if (ret < 2) {
-		ret_val = -1;
+		rc = -1;
 	}
 
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fwrite_U16_b(FILE * fp, uint16_t val)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int32_t rc = 0;
 	uint8_t buf[2];
 
 	ndz_write_U16_b(buf, val);
 	ret = fwrite(buf, 1, 2, fp);
 	if (ret < 2) {
-		ret_val = -1;
+		rc = -1;
 	}
 
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fwrite_I16_l(FILE * fp, int16_t val)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int32_t rc = 0;
 	uint8_t buf[2];
 
 	ndz_write_I16_l(buf, val);
 	ret = fwrite(buf, 1, 2, fp);
 	if (ret < 2) {
-		ret_val = -1;
+		rc = -1;
 	}
 
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fwrite_I16_b(FILE * fp, int16_t val)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int32_t rc = 0;
 	uint8_t buf[2];
 
 	ndz_write_I16_b(buf, val);
 	ret = fwrite(buf, 1, 2, fp);
 	if (ret < 2) {
-		ret_val = -1;
+		rc = -1;
 	}
 
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fwrite_U32_l(FILE * fp, uint32_t val)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int32_t rc = 0;
 	uint8_t buf[4];
 
 	ndz_write_U32_l(buf, val);
 	ret = fwrite(buf, 1, 4, fp);
 	if (ret < 4) {
-		ret_val = -1;
+		rc = -1;
 	}
 
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fwrite_U32_b(FILE * fp, uint32_t val)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int32_t rc = 0;
 	uint8_t buf[4];
 
 	ndz_write_U32_b(buf, val);
 	ret = fwrite(buf, 1, 4, fp);
 	if (ret < 4) {
-		ret_val = -1;
+		rc = -1;
 	}
 
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fwrite_I32_l(FILE * fp, int32_t val)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int32_t rc = 0;
 	uint8_t buf[4];
 
 	ndz_write_I32_l(buf, val);
 	ret = fwrite(buf, 1, 4, fp);
 	if (ret < 4) {
-		ret_val = -1;
+		rc = -1;
 	}
 
-	return ret_val;
+	return rc;
 }
 
 int32_t
 ndz_fwrite_I32_b(FILE * fp, int32_t val)
 {
 	int32_t ret;
-	int32_t ret_val = 0;
+	int32_t rc = 0;
 	uint8_t buf[4];
 
 	ndz_write_I32_b(buf, val);
 	ret = fwrite(buf, 1, 4, fp);
 	if (ret < 4) {
-		ret_val = -1;
+		rc = -1;
 	}
 
-	return ret_val;
+	return rc;
 }
 
 

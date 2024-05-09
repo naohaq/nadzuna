@@ -40,19 +40,19 @@ int32_t
 ndz_print_error(const char_t * func_name, const char_t * fmt, ...)
 {
 	int32_t ret;
-	int32_t ret_val;
+	int32_t rc;
 	va_list ap;
 
 	va_start(ap, fmt);
 
 	ret = fprintf(stderr, "%s: ", func_name);
 	ret = vfprintf(stderr, fmt, ap);
-	ret_val = ret;
+	rc = ret;
 
 	va_end(ap);
 
 	ret = fputs("\n", stderr);
-	return ret_val;
+	return rc;
 }
 
 /*
