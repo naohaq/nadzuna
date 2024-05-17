@@ -80,6 +80,7 @@ extern NADZUNA_API ndz_image_t * ndz_image_create(int32_t width, int32_t stride,
 extern NADZUNA_API void ndz_image_free(ndz_image_t * img);
 
 extern NADZUNA_API ndz_image_t * ndz_load_png(const char * filename);
+extern NADZUNA_API int ndz_save_png(const char * filename, ndz_image_t * img);
 
 extern NADZUNA_API ndz_image_t * ndz_load_jpeg(const char * filename);
 
