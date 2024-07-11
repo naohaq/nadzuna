@@ -18,7 +18,6 @@
 
 #include "common.h"
 #include "color.h"
-// #include "file_io.h"
 #include "pngfile.h"
 #include "error.h"
 
@@ -90,7 +89,8 @@ ndz_save_png(const char * filename, ndz_image_t * src_img)
 	png_infop info_ptr = NULL;
 	FILE * fp = NULL;
 
-	if (src_img->fmt != NDZ_COLORFMT_ARGB8888) {
+	if (src_img->fmt != NDZ_COLORFMT_ARGB8888 &&
+		src_img->fmt != NDZ_COLORFMT_Y8) {
 		ndz_print_error(__func__, "Unsupported color format: %d\n", src_img->fmt);
 		err = 1;
 		goto ERR_EXIT;
@@ -125,18 +125,39 @@ ndz_save_png(const char * filename, ndz_image_t * src_img)
 	int w = src_img->width;
 	int h = src_img->height;
 	int stride = src_img->stride;
-	int interlace = PNG_INTERLACE_NONE;
-	png_set_IHDR(png_ptr, info_ptr, w, h, 8,
-				 PNG_COLOR_TYPE_RGB_ALPHA, interlace,
-				 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-	png_set_bgr(png_ptr);
 
+	int color_type = 0;
 	png_color_8 sig_bit;
+	int interlace = PNG_INTERLACE_NONE;
 
-	sig_bit.red   = 8;
-	sig_bit.green = 8;
-	sig_bit.blue  = 8;
-	sig_bit.alpha = 8;
+	switch (src_img->fmt) {
+	case NDZ_COLORFMT_ARGB8888:
+		color_type = PNG_COLOR_TYPE_RGB_ALPHA;
+		sig_bit.red   = 8;
+		sig_bit.green = 8;
+		sig_bit.blue  = 8;
+		sig_bit.alpha = 8;
+		break;
+
+	case NDZ_COLORFMT_Y8:
+		color_type = PNG_COLOR_TYPE_GRAY;
+		sig_bit.gray  = 8;
+		break;
+
+	default:
+		/* must not be reached. */
+		ndz_print_error(__func__, "[BUG] illegal image format: %d", src_img->fmt);
+		abort( );
+	}
+
+	png_set_IHDR(png_ptr, info_ptr, w, h, 8,
+				 color_type, interlace,
+				 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+	if (src_img->fmt == NDZ_COLORFMT_ARGB8888) {
+		png_set_bgr(png_ptr);
+	}
+
 	png_set_sBIT(png_ptr, info_ptr, &sig_bit);
 
 	png_set_compression_level(png_ptr, 7);
@@ -145,11 +166,30 @@ ndz_save_png(const char * filename, ndz_image_t * src_img)
 	png_set_shift(png_ptr, &sig_bit);
 	png_set_packing(png_ptr);
 
-	uint32_t * pixels = (uint32_t *)src_img->pixels;
-	for (int y=0; y<h; y+=1) {
-		uint32_t * slp = &(pixels[stride*y]);
-		png_bytep row_ptr = (png_bytep)slp;
-		png_write_rows(png_ptr, &row_ptr, 1);
+	switch (src_img->fmt) {
+	case NDZ_COLORFMT_ARGB8888: {
+		uint32_t * pixels = (uint32_t *)src_img->pixels;
+		for (int y=0; y<h; y+=1) {
+			uint32_t * slp = &(pixels[stride*y]);
+			png_bytep row_ptr = (png_bytep)slp;
+			png_write_rows(png_ptr, &row_ptr, 1);
+		}
+		break;
+	}
+
+	case NDZ_COLORFMT_Y8: {
+		uint8_t * pixels = (uint8_t *)src_img->pixels;
+		for (int y=0; y<h; y+=1) {
+			png_bytep row_ptr = (png_bytep)&(pixels[stride*y]);
+			png_write_rows(png_ptr, &row_ptr, 1);
+		}
+		break;
+	}
+
+	default:
+		/* must not be reached. */
+		ndz_print_error(__func__, "[BUG] illegal image format: %d", src_img->fmt);
+		abort( );
 	}
 
 	rc = 0;
