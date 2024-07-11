@@ -63,7 +63,7 @@ _jpeg_data_init(ndz_jpeg_data_t * jd)
 	jd->pub.error_exit = _jpeg_error_exit;
 	jd->pub.emit_message = _jpeg_emit_message;
 	/* jd->prefix = "ndz_load_jpeg"; */
-	
+
 	return jem;
 }
 
@@ -208,6 +208,132 @@ ERR_EXIT:
 	return img;
 }
 
+
+NADZUNA_API int
+ndz_save_jpeg(const char * filename, ndz_image_t * src_img, int quality)
+{
+	int rc = -1;
+	int err = 0;
+
+	assert(filename != NULL);
+	assert(src_img != NULL);
+
+	FILE * fp = NULL;
+	struct jpeg_compress_struct jcs;
+	ndz_jpeg_data_t jdata;
+	uint8_t * buf = NULL;
+
+	jcs.err = _jpeg_data_init(&jdata);
+	if (setjmp(jdata.setjmp_buffer)) {
+		err = 1;
+		goto ERR_EXIT;
+	}
+	jpeg_create_compress(&jcs);
+
+	if (src_img->fmt != NDZ_COLORFMT_ARGB8888 &&
+		src_img->fmt != NDZ_COLORFMT_Y8) {
+		ndz_print_error(__func__, "Unsupported color format: %d\n", src_img->fmt);
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+	fp = fopen(filename, "wb");
+	if (fp == NULL) {
+		ndz_print_strerror(__func__, "fopen");
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+	jpeg_stdio_dest(&jcs, fp);
+
+	int w = src_img->width;
+	int h = src_img->height;
+	int stride = src_img->stride;
+
+	buf = malloc(w * 3 * sizeof(uint8_t));
+	if (buf == NULL) {
+		ndz_print_error(__func__, "Failed to allocate memory...");
+		err = 1;
+		goto ERR_EXIT;
+	}
+
+	jcs.image_width = w;
+	jcs.image_height = h;
+
+	if (src_img->fmt == NDZ_COLORFMT_ARGB8888) {
+		jcs.input_components = 3;
+		jcs.in_color_space = JCS_RGB;
+	}
+	else if (src_img->fmt == NDZ_COLORFMT_Y8) {
+		jcs.input_components = 1;
+		jcs.in_color_space = JCS_GRAYSCALE;
+	}
+	else {
+		/* must not be reached. */
+		ndz_print_error(__func__, "[BUG] illegal image format: %d", src_img->fmt);
+		abort( );
+	}
+
+	if (quality < 1) {
+		quality = 1;
+	}
+	else if (quality > 100) {
+		quality = 100;
+	}
+
+	jpeg_set_defaults(&jcs);
+	jpeg_set_quality(&jcs, quality, TRUE);
+
+	jpeg_start_compress(&jcs, TRUE);
+
+	if (src_img->fmt == NDZ_COLORFMT_ARGB8888) {
+		uint32_t * pixels = (uint32_t *)src_img->pixels;
+
+		for (int y=0; jcs.next_scanline < jcs.image_height; y+=1) {
+			uint32_t * slp = &(pixels[y*stride]);
+			for (int k=0; k<w; k+=1) {
+				uint32_t c = slp[k];
+				buf[k*3+0] = (uint8_t)((c & 0x00ff0000) >> 16);
+				buf[k*3+1] = (uint8_t)((c & 0x0000ff00) >>  8);
+				buf[k*3+2] = (uint8_t) (c & 0x000000ff);
+			}
+			jpeg_write_scanlines(&jcs, (JSAMPROW *)&buf, 1);
+		}
+	}
+	else if (src_img->fmt == NDZ_COLORFMT_Y8) {
+		uint8_t * pixels = (uint8_t *)src_img->pixels;
+
+		for (int y=0; jcs.next_scanline < jcs.image_height; y+=1) {
+			uint8_t * slp = &(pixels[y*stride]);
+			jpeg_write_scanlines(&jcs, (JSAMPROW *)&slp, 1);
+		}
+	}
+	else {
+		/* must not be reached. */
+		ndz_print_error(__func__, "[BUG] illegal image format: %d", src_img->fmt);
+		abort( );
+	}
+
+	rc = 0;
+
+ERR_EXIT:
+	jpeg_finish_compress(&jcs);
+	jpeg_destroy_compress(&jcs);
+
+	if (buf != NULL) {
+		free(buf);
+	}
+
+	if (fp != NULL) {
+		fclose(fp);
+	}
+
+	if (err) {
+		rc = -1;
+	}
+
+	return rc;
+}
 
 /*
  * Local Variables:
