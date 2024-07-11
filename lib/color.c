@@ -15,7 +15,68 @@
 
 #include "common.h"
 #include "color.h"
+#include "color_inline.h"
 #include "error.h"
+
+static inline uint8_t
+clampU8(int32_t x)
+{
+	uint8_t y;
+	if (x < 0) {
+		y = 0;
+	}
+	else if (x > 255) {
+		y = 255;
+	}
+	else {
+		y = (uint8_t)x;
+	}
+	return y;
+}
+
+static inline void
+decomp_rgb(uint32_t rgb, uint32_t * rp, uint32_t * gp, uint32_t * bp)
+{
+	*rp = (rgb & 0x00ff0000U) >> 16;
+	*gp = (rgb & 0x0000ff00U) >>  8;
+	*bp = (rgb & 0x000000ffU);
+}
+
+static inline double
+rgb_to_y(double fr, double fg, double fb)
+{
+	return  0.299*fr + 0.587*fg + 0.114*fb;
+}
+
+static inline double
+rgb_to_u(double fr, double fg, double fb)
+{
+	return -0.169*fr - 0.331*fg + 0.500*fb;
+}
+
+static inline double
+rgb_to_v(double fr, double fg, double fb)
+{
+	return  0.500*fr - 0.419*fg - 0.081*fb;
+}
+
+static inline double
+yuv_to_r(double fy, double fu, double fv)
+{
+	return 1.000*fy - 0.0009267448331229*fu + 1.4016866683959961*fv;
+}
+
+static inline double
+yuv_to_g(double fy, double fu, double fv)
+{
+	return 1.000*fy - 0.3436953723430634*fu - 0.7141690254211426*fv;
+}
+
+static inline double
+yuv_to_b(double fy, double fu, double fv)
+{
+	return 1.000*fy + 1.7721604108810425*fu + 0.0009902204619721*fv;
+}
 
 
 int32_t
@@ -45,21 +106,23 @@ ndz_bytes_per_pixel(ndz_colorfmt_t fmt)
 NADZUNA_API ndz_yuv_t
 ndz_rgb2yuv(uint32_t rgb)
 {
-	const uint32_t r = (rgb & 0x00ff0000U) >> 16;
-	const uint32_t g = (rgb & 0x0000ff00U) >>  8;
-	const uint32_t b = (rgb & 0x000000ffU);
+	uint32_t r;
+	uint32_t g;
+	uint32_t b;
 
-	const float32_t fr = (float32_t)r;
-	const float32_t fg = (float32_t)g;
-	const float32_t fb = (float32_t)b;
+	decomp_rgb(rgb, &r, &g, &b);
 
-	const float32_t fy =  0.299f*fr + 0.587f*fg + 0.114f*fb;
-	const float32_t fu = -0.169f*fr - 0.331f*fg + 0.500f*fb;
-	const float32_t fv =  0.500f*fr - 0.419f*fg - 0.081f*fb;
+	const double fr = (double)r;
+	const double fg = (double)g;
+	const double fb = (double)b;
 
-	const int32_t y = (int32_t)floorf(fy);
-	const int32_t u = (int32_t)floorf(fu);
-	const int32_t v = (int32_t)floorf(fv);
+	const double fy = rgb_to_y(fr, fg, fb);
+	const double fu = rgb_to_u(fr, fg, fb);
+	const double fv = rgb_to_v(fr, fg, fb);
+
+	const int32_t y = (int32_t)floor(fy);
+	const int32_t u = (int32_t)floor(fu);
+	const int32_t v = (int32_t)floor(fv);
 
 	ndz_yuv_t result;
 	result.y = (uint8_t)y;
@@ -72,27 +135,19 @@ ndz_rgb2yuv(uint32_t rgb)
 NADZUNA_API uint32_t
 ndz_yuv2rgb(ndz_yuv_t s)
 {
-	const float32_t fy = (float32_t)s.y;
-	const float32_t fu = (float32_t)((int32_t)s.u - 128);
-	const float32_t fv = (float32_t)((int32_t)s.v - 128);
+	const double fy = (double)s.y;
+	const double fu = (double)((int32_t)s.u - 128);
+	const double fv = (double)((int32_t)s.v - 128);
 
-	const float32_t fr = 1.000f*fy - 0.0009267448331229f*fu + 1.4016866683959961f*fv;
-	const float32_t fg = 1.000f*fy - 0.3436953723430634f*fu - 0.7141690254211426f*fv;
-	const float32_t fb = 1.000f*fy + 1.7721604108810425f*fu + 0.0009902204619721f*fv;
+	const double fr = yuv_to_r(fy, fu, fv);
+	const double fg = yuv_to_g(fy, fu, fv);
+	const double fb = yuv_to_b(fy, fu, fv);
 
-	int32_t r = (int32_t)floorf(fr);
-	int32_t g = (int32_t)floorf(fg);
-	int32_t b = (int32_t)floorf(fb);
-	uint32_t c;
+	int32_t r = (int32_t)floor(fr);
+	int32_t g = (int32_t)floor(fg);
+	int32_t b = (int32_t)floor(fb);
+	uint32_t c = combine_ARGB(0, clampU8(r), clampU8(g), clampU8(b));
 
-	if (r <   0) r =   0;
-	if (r > 255) r = 255;
-	if (g <   0) g =   0;
-	if (g > 255) g = 255;
-	if (b <   0) b =   0;
-	if (b > 255) b = 255;
-
-	c = (r << 16) | (g << 8) | b;
 	return c;
 }
 
@@ -128,8 +183,13 @@ convert_RGB_to_Y8(ndz_image_t * src_img)
 		uint32_t * slp = &(pixels[k * stride]);
 		uint8_t  * dlp = &(((uint8_t *)dst_img->pixels)[k * width]);
 		for (j=0; j<width; j+=1) {
-			ndz_yuv_t c = ndz_rgb2yuv(slp[j]);
-			dlp[j] = c.y;
+			uint32_t r;
+			uint32_t g;
+			uint32_t b;
+			decomp_rgb(slp[j], &r, &g, &b);
+			double fy = rgb_to_y((double)r, (double)g, (double)b);
+			int32_t y = (int32_t)floor(fy);
+			dlp[j] = (uint8_t)y;
 		}
 	}
 
@@ -168,11 +228,8 @@ convert_Y8_to_RGB(ndz_image_t * src_img)
 		uint8_t  * slp = &(pixels[k * stride]);
 		uint32_t * dlp = &(((uint32_t *)dst_img->pixels)[k * width]);
 		for (j=0; j<width; j+=1) {
-			ndz_yuv_t s;
-			s.y = slp[j];
-			s.u = 128;
-			s.v = 128;
-			dlp[j] = ndz_yuv2rgb(s);
+			uint8_t y = slp[j];
+			dlp[j] = combine_ARGB(255, y, y, y);
 		}
 	}
 
