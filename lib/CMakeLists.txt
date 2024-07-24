@@ -42,4 +42,7 @@ target_link_libraries(nadzuna PUBLIC nadzuna_compiler_flags)
 target_include_directories(nadzuna PUBLIC ${PROJECT_SOURCE_DIR}/lib)
 target_include_directories(nadzuna PUBLIC ${PROJECT_BINARY_DIR})
 
+install(TARGETS nadzuna DESTINATION lib)
+install(FILES nadzuna.h DESTINATION include)
+
 # EOF
