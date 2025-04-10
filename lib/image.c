@@ -1,6 +1,6 @@
 /* -*- mode: c; coding: utf-8-unix -*- */
 /*
- * bitmapimg.c
+ * image.c
  * 
  *  by Naoyuki MORITA <naohaq@ps.sakura.ne.jp>
  */
