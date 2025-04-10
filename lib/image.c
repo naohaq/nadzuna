@@ -78,6 +78,76 @@ ndz_image_free(ndz_image_t * img)
 }
 
 
+NADZUNA_API void
+ndz_fill_image(ndz_image_t * img, uint32_t c)
+{
+	assert(img != NULL);
+	assert(img->pixels != NULL);
+	assert(img->stride >= img->width);
+
+	int width  = img->width;
+	int height = img->height;
+	int stride = img->stride;
+
+	int bytepp = GetBytesPerPixel_of_Format(img->fmt);
+
+	switch (bytepp) {
+	case 1: {
+		uint8_t c8 = (uint8_t)c;
+		uint8_t * pixels = (uint8_t *)img->pixels;
+		for (int k=0; k<height; k+=1) {
+			uint8_t * lp = &(pixels[k * stride]);
+			for (int j=0; j<width; j+=1) {
+				lp[j] = c8;
+			}
+		}
+		break;
+	}
+
+	case 2: {
+		uint16_t c16 = (uint16_t)c;
+		uint16_t * pixels = (uint16_t *)img->pixels;
+		for (int k=0; k<height; k+=1) {
+			uint16_t * lp = &(pixels[k * stride]);
+			for (int j=0; j<width; j+=1) {
+				lp[j] = c16;
+			}
+		}
+		break;
+	}
+
+	case 3: {
+		uint8_t b0 = ((uint8_t *)&c)[0];
+		uint8_t b1 = ((uint8_t *)&c)[1];
+		uint8_t b2 = ((uint8_t *)&c)[2];
+		uint8_t * pixels = (uint8_t *)img->pixels;
+		for (int k=0; k<height; k+=1) {
+			uint8_t * lp = &(pixels[k * stride * 3]);
+			for (int j=0; j<width; j+=1) {
+				lp[j*3+0] = b0;
+				lp[j*3+1] = b1;
+				lp[j*3+2] = b2;
+			}
+		}
+		break;
+	}
+
+	case 4: {
+		uint32_t * pixels = (uint32_t *)img->pixels;
+		for (int k=0; k<height; k+=1) {
+			uint32_t * lp = &(pixels[k * stride]);
+			for (int j=0; j<width; j+=1) {
+				lp[j] = c;
+			}
+		}
+		break;
+	}
+
+	default:
+		ndz_print_error(__func__, "Unsupported pixel format: %d", img->fmt);
+	}
+}
+
 /*
  * Local Variables:
  * indent-tabs-mode: t

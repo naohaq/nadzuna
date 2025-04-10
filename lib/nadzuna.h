@@ -99,6 +99,7 @@ extern NADZUNA_API int ndz_bytes_per_pixel(ndz_colorfmt_t fmt);
 extern NADZUNA_API ndz_yuv_t ndz_rgb2yuv(uint32_t rgb);
 extern NADZUNA_API uint32_t ndz_yuv2rgb(ndz_yuv_t s);
 
+extern NADZUNA_API void ndz_fill_image(ndz_image_t * img, uint32_t c);
 
 #ifdef __cplusplus
 }
